@@ -1,0 +1,63 @@
+name: Nix build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nix-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CACHIX_CACHE_NAME: nakasyou
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: NixOS p14s
+            runner: ubuntu-24.04
+            target: .#nixosConfigurations.p14s.config.system.build.toplevel
+          - name: Home Manager nakasyou
+            runner: ubuntu-24.04
+            target: .#nixosConfigurations.p14s.config.home-manager.users.nakasyou.home.activationPackage
+          - name: nix-darwin mac-mini
+            runner: macos-15
+            target: .#darwinConfigurations.mac-mini.system
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            accept-flake-config = true
+
+      - name: Configure Cachix
+        uses: cachix/cachix-action@v17
+        with:
+          name: ${{ env.CACHIX_CACHE_NAME }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          skipPush: ${{ secrets.CACHIX_AUTH_TOKEN == '' }}
+
+      - name: Show flake outputs
+        run: nix flake show
+
+      - name: Build ${{ matrix.target }}
+        run: nix build --print-build-logs "${{ matrix.target }}"

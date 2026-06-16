@@ -19,11 +19,6 @@
     '';
   };
 
-  programs.niri = {
-    enable = true;
-    useNautilus = true;
-  };
-
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
