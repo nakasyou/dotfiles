@@ -293,6 +293,7 @@ in
     v4l-utils
     ripgrep
     rquickshare
+    rustdesk
     grim
     slurp
     swaybg
