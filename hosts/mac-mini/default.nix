@@ -10,7 +10,15 @@
     home = "/Users/${username}";
   };
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    extra-substituters = [
+      "https://nakasyou.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "nakasyou.cachix.org-1:hqgFXvJm9R1/CjzmM8Tms+6eJTMu7Oqg3bLgbSU6ojk="
+    ];
+  };
 
   # Used for backwards compatibility; read `darwin-rebuild changelog` before changing.
   system.stateVersion = 6;

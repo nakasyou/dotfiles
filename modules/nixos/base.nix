@@ -32,8 +32,16 @@
     dates = "weekly";
     options = "--delete-older-than 14d";
   };
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  nix.settings.auto-optimise-store = true;
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    auto-optimise-store = true;
+    extra-substituters = [
+      "https://nakasyou.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "nakasyou.cachix.org-1:hqgFXvJm9R1/CjzmM8Tms+6eJTMu7Oqg3bLgbSU6ojk="
+    ];
+  };
   nix.nixPath = [
     "nixpkgs=${pkgs.path}"
     "nixos-config=/etc/nixos/nixos/configuration.nix"
