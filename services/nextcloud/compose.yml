@@ -1,0 +1,50 @@
+services:
+  db:
+    image: mariadb:11.4
+    container_name: nextcloud-db
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    env_file:
+      - .env
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: nextcloud:apache
+    container_name: nextcloud-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    env_file:
+      - .env
+    environment:
+      MYSQL_HOST: db
+      NEXTCLOUD_TRUSTED_DOMAINS: localhost 127.0.0.1 nextcloud.nakasyou.how
+      OVERWRITEHOST: nextcloud.nakasyou.how
+      OVERWRITEPROTOCOL: https
+      OVERWRITECLIURL: https://nextcloud.nakasyou.how
+      TRUSTED_PROXIES: 127.0.0.1 172.16.0.0/12
+      OBJECTSTORE_S3_BUCKET: notion-fs
+      OBJECTSTORE_S3_REGION: us-east-1
+      OBJECTSTORE_S3_HOST: host.docker.internal
+      OBJECTSTORE_S3_PORT: "9000"
+      OBJECTSTORE_S3_KEY: notion-fs-local
+      OBJECTSTORE_S3_SECRET: notion-fs-local-secret
+      OBJECTSTORE_S3_SSL: "false"
+      OBJECTSTORE_S3_USEPATH_STYLE: "true"
+      OBJECTSTORE_S3_AUTOCREATE: "false"
+      OBJECTSTORE_S3_OBJECT_PREFIX: "nextcloud-primary-"
+    volumes:
+      - ./data/html:/var/www/html
+      - ./docker/php/zz-disable-jit.ini:/usr/local/etc/php/conf.d/zz-disable-jit.ini:ro
+
+volumes:
+  db_data:

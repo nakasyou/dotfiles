@@ -1,9 +1,15 @@
 { username, ... }:
 
 {
+  imports = [
+    ../../modules/darwin/local-services.nix
+  ];
+
   nixpkgs.hostPlatform = "aarch64-darwin";
 
   networking.hostName = "mac-mini";
+
+  system.primaryUser = username;
 
   users.users.${username} = {
     name = username;
