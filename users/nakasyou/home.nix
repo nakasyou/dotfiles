@@ -117,6 +117,21 @@ let
     };
   };
   rquickshare = pkgs.callPackage ../../pkgs/rquickshare.nix { };
+  codexStandalonePath = "${config.home.homeDirectory}/.codex/packages/standalone/current/codex";
+  codexStandalone = pkgs.writeShellScriptBin "codex" ''
+    exec "${codexStandalonePath}" "$@"
+  '';
+  codexInstallerPath = lib.makeBinPath (with pkgs; [
+    coreutils
+    curl
+    findutils
+    gawk
+    gnugrep
+    gnused
+    gnutar
+    gzip
+    util-linux
+  ]);
   vastai = pkgs.python3Packages.buildPythonApplication rec {
     pname = "vastai";
     version = "1.0.8";
@@ -183,7 +198,7 @@ in
     DOTFILES_DIR = "${config.home.homeDirectory}/dotfiles";
     JAVA_HOME = javaHome;
     PKG_CONFIG_PATH = lib.makeSearchPathOutput "dev" "lib/pkgconfig" gtk4PkgConfigPackages;
-    CODEX_CLI_PATH = "/home/nakasyou/.npm-global/bin/codex";
+    CODEX_CLI_PATH = codexStandalonePath;
   };
   home.sessionPath = [
     "${javaHome}/bin"
@@ -241,6 +256,28 @@ in
       alias nakasyou-nix-rebuild="sudo nixos-rebuild switch --flake path:/home/nakasyou/dotfiles#p14s"
     '';
   };
+  home.activation.installCodexStandalone = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    codex_standalone="${codexStandalonePath}"
+
+    if [ ! -x "$codex_standalone" ]; then
+      echo "Installing Codex standalone"
+      tmp_dir="$(${pkgs.coreutils}/bin/mktemp -d)"
+
+      cleanup_codex_installer() {
+        ${pkgs.coreutils}/bin/rm -rf "$tmp_dir"
+      }
+      trap cleanup_codex_installer EXIT INT TERM
+
+      ${pkgs.curl}/bin/curl -fsSL https://chatgpt.com/codex/install.sh -o "$tmp_dir/install.sh"
+      install_bin_dir="$tmp_dir/bin"
+      env \
+        PATH="$install_bin_dir:${codexInstallerPath}:$PATH" \
+        CODEX_NON_INTERACTIVE=1 \
+        CODEX_INSTALL_DIR="$install_bin_dir" \
+        CODEX_HOME="${config.home.homeDirectory}/.codex" \
+        ${pkgs.bash}/bin/bash "$tmp_dir/install.sh"
+    fi
+  '';
   home.packages = with pkgs; [
     androidStudio
     androidSdk
@@ -313,6 +350,7 @@ in
     gnome-tweaks
     turbowarp-desktop
     vastai
+    codexStandalone
     codex-desktop
     flameshotGui
     tmux
