@@ -43,30 +43,30 @@ let
       libcxx
       libpulseaudio
       mesa
-      xorg.libX11
-      xorg.libXcomposite
-      xorg.libXcursor
-      xorg.libXdamage
-      xorg.libXext
-      xorg.libXfixes
-      xorg.libXi
-      xorg.libXinerama
-      xorg.libXrandr
-      xorg.libXrender
-      xorg.libXScrnSaver
-      xorg.libXtst
-      xorg.libXxf86vm
-      xorg.libICE
-      xorg.libSM
-      xorg.libxcb
-      xorg.libxkbfile
-      xorg.libxshmfence
-      xorg.xcbutil
-      xorg.xcbutilcursor
-      xorg.xcbutilimage
-      xorg.xcbutilkeysyms
-      xorg.xcbutilrenderutil
-      xorg.xcbutilwm
+      libx11
+      libxcomposite
+      libxcursor
+      libxdamage
+      libxext
+      libxfixes
+      libxi
+      libxinerama
+      libxrandr
+      libxrender
+      libxscrnsaver
+      libxtst
+      libxxf86vm
+      libice
+      libsm
+      libxcb
+      libxkbfile
+      libxshmfence
+      libxcb-util
+      libxcb-cursor
+      libxcb-image
+      libxcb-keysyms
+      libxcb-render-util
+      libxcb-wm
     ];
   }).run;
   eclipsa-android-emulator = pkgs.writeShellScriptBin "eclipsa-android-emulator" ''
@@ -116,7 +116,6 @@ let
       sourceProvenance = with sourceTypes; [ binaryNativeCode ];
     };
   };
-  rquickshare = pkgs.callPackage ../../pkgs/rquickshare.nix { };
   codexStandalonePath = "${config.home.homeDirectory}/.codex/packages/standalone/current/codex";
   codexStandalone = pkgs.writeShellScriptBin "codex" ''
     exec "${codexStandalonePath}" "$@"
@@ -149,6 +148,7 @@ let
 
     pythonRelaxDeps = [
       "aiodns"
+      "borb"
       "cryptography"
       "psutil"
       "pycares"
@@ -156,7 +156,9 @@ let
 
     dependencies = with pkgs.python3Packages; [
       xdg
-      borb
+      (borb.overridePythonAttrs (_: {
+        doCheck = false;
+      }))
       requests
       python-dateutil
       urllib3
@@ -216,7 +218,7 @@ in
     force = true;
   };
   xdg.configFile."autostart/proton.vpn.app.gtk.desktop".source =
-    "${pkgs.protonvpn-gui}/share/applications/proton.vpn.app.gtk.desktop";
+    "${pkgs.proton-vpn}/share/applications/proton.vpn.app.gtk.desktop";
   xdg.configFile."mimeapps.list".force = true;
   xdg.dataFile."applications/mimeapps.list".force = true;
   home.file.".profile".text = ''
@@ -289,8 +291,8 @@ in
     steamRun
     pkg-config
     gtk4
-    xorg.xorgserver
-    xorg.xauth
+    xorg-server
+    xauth
     google-chrome
     vscode
     libreoffice
@@ -329,8 +331,6 @@ in
     pavucontrol
     v4l-utils
     ripgrep
-    rquickshare
-    rustdesk
     grim
     slurp
     swaybg
@@ -338,7 +338,7 @@ in
     wlogout
     networkmanagerapplet
     mpvpaper
-    protonvpn-gui
+    proton-vpn
     zip
     brave
     gpaste
@@ -366,7 +366,6 @@ in
     mitmproxy
     apkid
     (python3.withPackages (ps: with ps; [
-      androguard
       frida-python
       lief
       r2pipe

@@ -90,8 +90,8 @@ in
       libinput = prev.libinput.overrideAttrs (old: {
         postPatch = (old.postPatch or "") + ''
           substituteInPlace src/evdev.c \
-            --replace-fail 'DEFAULT_BUTTON_SCROLL_TIMEOUT ms2us(200)' \
-                            'DEFAULT_BUTTON_SCROLL_TIMEOUT ms2us(50)'
+            --replace-fail 'DEFAULT_BUTTON_SCROLL_TIMEOUT usec_from_millis(200)' \
+                            'DEFAULT_BUTTON_SCROLL_TIMEOUT usec_from_millis(50)'
         '';
       });
     })
