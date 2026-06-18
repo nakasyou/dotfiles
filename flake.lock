@@ -6,11 +6,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1781587006,
-        "narHash": "sha256-dJgt2G6seJRm551ZyqOv6VvtjnuGcpeX7n+A/MzgwA4=",
+        "lastModified": 1781761316,
+        "narHash": "sha256-hH+5JNKVugNkXEG0fLiGkvOySCmPERUcm+njP1+RLJw=",
         "owner": "ilysenko",
         "repo": "codex-desktop-linux",
-        "rev": "81a6ddd3f4f55de2667a43fc7bde09bb47e1fd7c",
+        "rev": "9125911c8347c35177dfc76e2f5bce2b8b2e41d4",
         "type": "github"
       },
       "original": {
@@ -64,11 +64,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1781595101,
-        "narHash": "sha256-FfcWyRBB5PEPLgKILl3zauxeEQnLYgx1Aa1GF61Bx+0=",
+        "lastModified": 1781765797,
+        "narHash": "sha256-r9qILR4XEYyisbxoAy42uIEkBJrmWRvBHlAY+GCJqDI=",
         "owner": "moonbit-community",
         "repo": "moonbit-overlay",
-        "rev": "c807b6949de399bceffcae4c90075611d981f88d",
+        "rev": "164f9f7240f92e74639f6a2053922968c298f6b0",
         "type": "github"
       },
       "original": {
