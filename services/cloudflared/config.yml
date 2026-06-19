@@ -1,0 +1,14 @@
+tunnel: 072a6293-1edf-4c7e-b9b2-bcc59abfa77b
+credentials-file: /Users/nakasyou/.cloudflared/072a6293-1edf-4c7e-b9b2-bcc59abfa77b.json
+
+ingress:
+  - hostname: betterzeriya.nakasyou.how
+    service: http://127.0.0.1:3000
+  - hostname: nextcloud.nakasyou.how
+    service: http://127.0.0.1:8080
+    originRequest:
+      noHappyEyeballs: true
+      keepAliveConnections: 1000
+      keepAliveTimeout: 10m
+      tcpKeepAlive: 30s
+  - service: http_status:404

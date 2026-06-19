@@ -2,6 +2,7 @@
 
 {
   imports = [
+    ../../modules/darwin/cloudflared.nix
     ../../modules/darwin/local-services.nix
   ];
 
