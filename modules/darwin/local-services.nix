@@ -62,6 +62,7 @@ in
 {
   environment.systemPackages = with pkgs; [
     cargo
+    nodejs_22
     rustc
   ];
 
