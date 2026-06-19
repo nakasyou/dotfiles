@@ -8,6 +8,7 @@ let
   servicePath = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
   colima = "/opt/homebrew/bin/colima";
   docker = "/opt/homebrew/bin/docker";
+  cloudflaredConfig = ../../services/cloudflared/config.yml;
 
   notionAsS3Script = pkgs.writeShellScript "notion-as-a-s3-launch" ''
     set -euo pipefail
@@ -64,6 +65,7 @@ in
     cargo
     nodejs_22
     rustc
+    cloudflared
   ];
 
   system.activationScripts.nakasyouLocalServices.text = ''
@@ -78,12 +80,18 @@ in
       "${logsDir}"
 
     install -o ${username} -g staff -m 0644 \
-      "${../services/nextcloud/compose.yml}" \
+      "${../../services/nextcloud/compose.yml}" \
       "${servicesDir}/nextcloud/compose.yml"
 
     install -o ${username} -g staff -m 0644 \
-      "${../services/nextcloud/docker/php/zz-disable-jit.ini}" \
+      "${../../services/nextcloud/docker/php/zz-disable-jit.ini}" \
       "${servicesDir}/nextcloud/docker/php/zz-disable-jit.ini"
+
+    install -d -o ${username} -g staff -m 0700 \
+      "${homeDir}/.cloudflared"
+    install -o ${username} -g staff -m 0600 \
+      "${cloudflaredConfig}" \
+      "${homeDir}/.cloudflared/config.yml"
   '';
 
   launchd.user.agents.nakasyou-notion-as-a-s3.serviceConfig = {
@@ -103,5 +111,22 @@ in
     WorkingDirectory = "${servicesDir}/nextcloud";
     StandardOutPath = "${logsDir}/nextcloud.log";
     StandardErrorPath = "${logsDir}/nextcloud.err.log";
+  };
+
+  launchd.user.agents.nakasyou-cloudflared.serviceConfig = {
+    Label = "how.nakasyou.cloudflared";
+    ProgramArguments = [
+      "${pkgs.cloudflared}/bin/cloudflared"
+      "tunnel"
+      "--config"
+      "${homeDir}/.cloudflared/config.yml"
+      "run"
+    ];
+    RunAtLoad = true;
+    KeepAlive = true;
+    ProcessType = "Interactive";
+    WorkingDirectory = "${homeDir}";
+    StandardOutPath = "${logsDir}/cloudflared.log";
+    StandardErrorPath = "${logsDir}/cloudflared.err.log";
   };
 }
