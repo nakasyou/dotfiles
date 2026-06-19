@@ -258,6 +258,7 @@ in
       alias nakasyou-nix-rebuild="sudo nixos-rebuild switch --flake path:/home/nakasyou/dotfiles#p14s"
     '';
   };
+
   home.activation.installCodexStandalone = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     codex_standalone="${codexStandalonePath}"
 
