@@ -8,22 +8,7 @@ let
   servicePath = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
   colima = "/opt/homebrew/bin/colima";
   docker = "/opt/homebrew/bin/docker";
-  cloudflaredConfig = pkgs.writeText "cloudflared-config.yml" ''
-    tunnel: 072a6293-1edf-4c7e-b9b2-bcc59abfa77b
-    credentials-file: ${homeDir}/.cloudflared/072a6293-1edf-4c7e-b9b2-bcc59abfa77b.json
-
-    ingress:
-      - hostname: betterzeriya.nakasyou.how
-        service: http://127.0.0.1:3000
-      - hostname: nextcloud.nakasyou.how
-        service: http://127.0.0.1:8080
-        originRequest:
-          noHappyEyeballs: true
-          keepAliveConnections: 1000
-          keepAliveTimeout: 10m
-          tcpKeepAlive: 30s
-      - service: http_status:404
-  '';
+  cloudflaredConfig = ../../services/cloudflared/config.yml;
 
   notionAsS3Script = pkgs.writeShellScript "notion-as-a-s3-launch" ''
     set -euo pipefail
@@ -95,11 +80,11 @@ in
       "${logsDir}"
 
     install -o ${username} -g staff -m 0644 \
-      "${../services/nextcloud/compose.yml}" \
+      "${../../services/nextcloud/compose.yml}" \
       "${servicesDir}/nextcloud/compose.yml"
 
     install -o ${username} -g staff -m 0644 \
-      "${../services/nextcloud/docker/php/zz-disable-jit.ini}" \
+      "${../../services/nextcloud/docker/php/zz-disable-jit.ini}" \
       "${servicesDir}/nextcloud/docker/php/zz-disable-jit.ini"
 
     install -d -o ${username} -g staff -m 0700 \
