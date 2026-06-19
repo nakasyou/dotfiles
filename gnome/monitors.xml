@@ -36,6 +36,7 @@
           <height>1080</height>
           <rate>60.003</rate>
         </mode>
+        <colormode>bt2100</colormode>
       </monitor>
     </logicalmonitor>
   </configuration>
@@ -76,6 +77,7 @@
           <height>1080</height>
           <rate>60.003</rate>
         </mode>
+        <colormode>bt2100</colormode>
       </monitor>
     </logicalmonitor>
   </configuration>
@@ -83,7 +85,7 @@
     <layoutmode>physical</layoutmode>
     <logicalmonitor>
       <x>0</x>
-      <y>0</y>
+      <y>1080</y>
       <scale>1</scale>
       <primary>yes</primary>
       <monitor>
@@ -99,6 +101,11 @@
           <rate>60.002</rate>
         </mode>
       </monitor>
+    </logicalmonitor>
+    <logicalmonitor>
+      <x>0</x>
+      <y>0</y>
+      <scale>1</scale>
       <monitor>
         <monitorspec>
           <connector>HDMI-1</connector>

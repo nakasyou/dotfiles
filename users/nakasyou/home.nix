@@ -310,6 +310,7 @@ in
     kooha
     gnome-sound-recorder
     nodejs_22
+    vite-plus
     bun
     deno
     moonbit-bin.moonbit.latest
@@ -352,6 +353,8 @@ in
     vastai
     codexStandalone
     codex-desktop
+    llm-agents.grok
+    llm-agents.mimo-code
     flameshotGui
     tmux
     apktool
@@ -406,6 +409,14 @@ in
   };
 
   dconf.settings = {
+    "org/gnome/desktop/interface" = {
+      text-scaling-factor = 1.0;
+    };
+
+    "org/gnome/mutter" = {
+      experimental-features = [ ];
+    };
+
     "org/gnome/shell" = {
       disable-user-extensions = false;
       enabled-extensions = [
