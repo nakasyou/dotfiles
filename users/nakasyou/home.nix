@@ -213,10 +213,6 @@ in
     enable = true;
   };
 
-  xdg.configFile."monitors.xml" = {
-    source = ../../gnome/monitors.xml;
-    force = true;
-  };
   xdg.configFile."autostart/proton.vpn.app.gtk.desktop".source =
     "${pkgs.proton-vpn}/share/applications/proton.vpn.app.gtk.desktop";
   xdg.configFile."mimeapps.list".force = true;
