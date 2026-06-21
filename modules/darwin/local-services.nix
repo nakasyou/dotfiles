@@ -59,6 +59,62 @@ let
     cd "${servicesDir}/nextcloud"
     exec "${docker}" compose up -d
   '';
+
+  litellmScript = pkgs.writeShellScript "litellm-launch" ''
+    set -euo pipefail
+
+    export HOME="${homeDir}"
+    export DOCKER_HOST="${dockerHost}"
+    export PATH="${servicePath}"
+
+    "${colima}" start
+
+    # Wait for colima docker socket to become available
+    colimaSocket="${homeDir}/.colima/default/docker.sock"
+    for attempt in $(seq 1 30); do
+      if [ -S "$colimaSocket" ]; then
+        break
+      fi
+      if [ "$attempt" = 30 ]; then
+        echo "colima socket did not appear in time" >&2
+        exit 1
+      fi
+      sleep 1
+    done
+
+    cd "${servicesDir}/litellm"
+    exec "${docker}" compose up -d
+  '';
+
+  csbieScript = pkgs.writeShellScript "csbie-launch" ''
+    set -euo pipefail
+
+    export HOME="${homeDir}"
+    export DOCKER_HOST="${dockerHost}"
+    export PATH="${servicePath}"
+
+    "${colima}" start
+
+    colimaSocket="${homeDir}/.colima/default/docker.sock"
+    for attempt in $(seq 1 30); do
+      if [ -S "$colimaSocket" ]; then
+        break
+      fi
+      if [ "$attempt" = 30 ]; then
+        echo "colima socket did not appear in time" >&2
+        exit 1
+      fi
+      sleep 1
+    done
+
+    cd "${servicesDir}/csbie"
+    if [ ! -f .env ]; then
+      echo "missing ${servicesDir}/csbie/.env; create it from env.example before starting csbie" >&2
+      exit 1
+    fi
+
+    exec "${docker}" compose up -d
+  '';
 in
 {
   environment.systemPackages = with pkgs; [
@@ -68,7 +124,7 @@ in
     cloudflared
   ];
 
-  system.activationScripts.nakasyouLocalServices.text = ''
+  system.activationScripts.postActivation.text = ''
     install -d -o ${username} -g staff -m 0755 \
       "${servicesDir}" \
       "${servicesDir}/nextcloud" \
@@ -77,6 +133,13 @@ in
       "${servicesDir}/nextcloud/data" \
       "${servicesDir}/notion-as-a-s3" \
       "${servicesDir}/notion-as-a-s3/temp" \
+      "${servicesDir}/litellm" \
+      "${servicesDir}/litellm/data" \
+      "${servicesDir}/litellm/data/postgres" \
+      "${servicesDir}/csbie" \
+      "${servicesDir}/csbie/data" \
+      "${homeDir}/.config/litellm" \
+      "${homeDir}/.config/litellm/xai_oauth" \
       "${logsDir}"
 
     install -o ${username} -g staff -m 0644 \
@@ -86,6 +149,28 @@ in
     install -o ${username} -g staff -m 0644 \
       "${../../services/nextcloud/docker/php/zz-disable-jit.ini}" \
       "${servicesDir}/nextcloud/docker/php/zz-disable-jit.ini"
+
+    install -o ${username} -g staff -m 0644 \
+      "${../../services/litellm/compose.yml}" \
+      "${servicesDir}/litellm/compose.yml"
+
+    install -o ${username} -g staff -m 0644 \
+      "${../../services/litellm/litellm_config.yaml}" \
+      "${servicesDir}/litellm/litellm_config.yaml"
+
+    install -o ${username} -g staff -m 0644 \
+      "${../../services/litellm/Dockerfile}" \
+      "${servicesDir}/litellm/Dockerfile"
+
+    install -o ${username} -g staff -m 0644 \
+      "${../../services/csbie/compose.yml}" \
+      "${servicesDir}/csbie/compose.yml"
+
+    if [ ! -f "${servicesDir}/csbie/env.example" ]; then
+      install -o ${username} -g staff -m 0600 \
+        "${../../services/csbie/env.example}" \
+        "${servicesDir}/csbie/env.example"
+    fi
 
     install -d -o ${username} -g staff -m 0700 \
       "${homeDir}/.cloudflared"
@@ -111,6 +196,24 @@ in
     WorkingDirectory = "${servicesDir}/nextcloud";
     StandardOutPath = "${logsDir}/nextcloud.log";
     StandardErrorPath = "${logsDir}/nextcloud.err.log";
+  };
+
+  launchd.user.agents.nakasyou-litellm.serviceConfig = {
+    Label = "how.nakasyou.litellm";
+    ProgramArguments = [ "${litellmScript}" ];
+    RunAtLoad = true;
+    WorkingDirectory = "${servicesDir}/litellm";
+    StandardOutPath = "${logsDir}/litellm.log";
+    StandardErrorPath = "${logsDir}/litellm.err.log";
+  };
+
+  launchd.user.agents.nakasyou-csbie.serviceConfig = {
+    Label = "how.nakasyou.csbie";
+    ProgramArguments = [ "${csbieScript}" ];
+    RunAtLoad = true;
+    WorkingDirectory = "${servicesDir}/csbie";
+    StandardOutPath = "${logsDir}/csbie.log";
+    StandardErrorPath = "${logsDir}/csbie.err.log";
   };
 
   launchd.user.agents.nakasyou-cloudflared.serviceConfig = {
