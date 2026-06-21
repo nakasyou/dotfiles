@@ -1,0 +1,16 @@
+services:
+  csbie:
+    image: git.yutakobayashi.com/nakasyou/csbi:latest
+    container_name: csbie
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18787:8787"
+    env_file:
+      - .env
+    environment:
+      CSBIE_ORIGIN: https://csbie.nakasyou.how
+      CSBIE_CORS_ORIGIN: https://csbie.nakasyou.how
+      CSBIE_RP_ID: csbie.nakasyou.how
+      CSBIE_KEYRING_BACKEND: sqlite
+    volumes:
+      - ./data:/app/data

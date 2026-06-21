@@ -1,0 +1,54 @@
+# LiteLLM configuration
+# See: https://docs.litellm.ai/docs/proxy/configs
+#
+# Secrets (API keys, master key, etc.) should be provided via .env file.
+# Example .env entries:
+#   OPENAI_API_KEY=sk-...
+#   ANTHROPIC_API_KEY=sk-ant-...
+#   LITELLM_MASTER_KEY=sk-litellm-...
+#
+# For UI login (Postgres is configured in compose + these in .env):
+#   POSTGRES_USER=litellm
+#   POSTGRES_PASSWORD=your-secure-password
+#   POSTGRES_DB=litellm
+#   DATABASE_URL=postgresql://litellm:your-secure-password@db:5432/litellm
+
+model_list:
+  - model_name: gpt-4o
+    litellm_params:
+      model: gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: claude-3-5-sonnet
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-3-haiku
+    litellm_params:
+      model: anthropic/claude-3-haiku-20240307
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # xAI OAuth (from PR #29866)
+  # 1. On host: pip install "litellm @ git+https://github.com/BerriAI/litellm.git@refs/pull/29866/head"
+  # 2. Run: litellm xai-oauth login   (opens browser for xAI OAuth)
+  # 3. The token file is mounted into the container automatically
+  - model_name: grok-4-oauth
+    litellm_params:
+      model: xai_oauth/grok-4
+      # use_xai_oauth: true   # alternative way (works with "xai/grok-4" too)
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  store_model_in_db: true
+  # Set to true to drop unknown params sent by clients
+  # drop_params: true
+
+litellm_settings:
+  request_timeout: 600
+  # set_verbose: true
