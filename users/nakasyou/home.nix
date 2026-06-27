@@ -213,10 +213,6 @@ in
     enable = true;
   };
 
-  xdg.configFile."monitors.xml" = {
-    source = ../../gnome/monitors.xml;
-    force = true;
-  };
   xdg.configFile."autostart/proton.vpn.app.gtk.desktop".source =
     "${pkgs.proton-vpn}/share/applications/proton.vpn.app.gtk.desktop";
   xdg.configFile."mimeapps.list".force = true;
@@ -406,36 +402,6 @@ in
       "application/vnd.oasis.opendocument.presentation-template" = [ "impress.desktop" ];
       "application/vnd.openxmlformats-officedocument.presentationml.presentation" = [ "impress.desktop" ];
       "application/vnd.openxmlformats-officedocument.presentationml.template" = [ "impress.desktop" ];
-    };
-  };
-
-  dconf.settings = {
-    "org/gnome/desktop/interface" = {
-      text-scaling-factor = 1.0;
-    };
-
-    "org/gnome/mutter" = {
-      experimental-features = [ ];
-    };
-
-    "org/gnome/shell" = {
-      disable-user-extensions = false;
-      enabled-extensions = [
-        "appindicatorsupport@rgcjonas.gmail.com"
-        "dash-to-dock@micxgx.gmail.com"
-        "blur-my-shell@aunetx"
-        "kimpanel2@kde.org"
-      ];
-    };
-
-    "org/gnome/shell/extensions/dash-to-dock" = {
-      autohide = true;
-      dock-fixed = false;
-      dock-position = "BOTTOM";
-      require-pressure-to-show = false;
-      show-delay = 0.0;
-      hide-delay = 0.2;
-      intellihide = false;
     };
   };
 }

@@ -15,18 +15,6 @@ let
   };
 in
 {
-  programs.dconf = {
-    enable = true;
-    profiles.user.databases = [{
-      lockAll = true;
-      settings = {
-        "org/gnome/desktop/input-sources" = {
-          sources = [ (lib.gvariant.mkTuple [ "xkb" "jp" ]) ];
-        };
-      };
-    }];
-  };
-
   services.xserver.xkb = {
     layout = "jp";
     model = "jp106";
