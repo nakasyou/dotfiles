@@ -11,6 +11,8 @@ services:
       MNIE_ORIGIN: https://csbie.nakasyou.how
       MNIE_CORS_ORIGIN: https://csbie.nakasyou.how
       MNIE_RP_ID: csbie.nakasyou.how
+      MNIE_DATABASE_PATH: /app/data/csbie.sqlite
       MNIE_KEYRING_BACKEND: sqlite
+      MNIE_KEYRING_SQLITE_PATH: /app/data/csbie.keyring.sqlite
     volumes:
       - ./data:/app/data
