@@ -1,6 +1,6 @@
 services:
   csbie:
-    image: git.yutakobayashi.com/nakasyou/csbi:latest
+    image: git.yutakobayashi.com/nakasyou/mnie:latest
     container_name: csbie
     restart: unless-stopped
     ports:
@@ -8,9 +8,9 @@ services:
     env_file:
       - .env
     environment:
-      CSBIE_ORIGIN: https://csbie.nakasyou.how
-      CSBIE_CORS_ORIGIN: https://csbie.nakasyou.how
-      CSBIE_RP_ID: csbie.nakasyou.how
-      CSBIE_KEYRING_BACKEND: sqlite
+      MNIE_ORIGIN: https://csbie.nakasyou.how
+      MNIE_CORS_ORIGIN: https://csbie.nakasyou.how
+      MNIE_RP_ID: csbie.nakasyou.how
+      MNIE_KEYRING_BACKEND: sqlite
     volumes:
       - ./data:/app/data
