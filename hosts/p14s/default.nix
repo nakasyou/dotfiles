@@ -13,7 +13,9 @@
     ../../modules/nixos/tailscale.nix
     ../../modules/nixos/hardware/amd-rocm.nix
     ../../modules/nixos/hardware/thinkpad-p14s.nix
+    ../../modules/nixos/steam.nix
   ];
 
   networking.hostName = "p14s";
+  hardware.flipperzero.enable = true;
 }

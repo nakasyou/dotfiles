@@ -4,20 +4,7 @@
   services.xserver.enable = true;
 
   services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome = {
-    enable = true;
-    extraGSettingsOverridePackages = [ pkgs.gsettings-desktop-schemas ];
-    extraGSettingsOverrides = ''
-      [org.gnome.desktop.peripherals.mouse]
-      speed=1.0
-
-      [org.gnome.desktop.peripherals.touchpad]
-      speed=0.3
-
-      [org.gnome.desktop.peripherals.pointingstick]
-      scroll-method='on-button-down'
-    '';
-  };
+  services.desktopManager.gnome.enable = true;
 
   xdg.portal = {
     enable = true;

@@ -36,39 +36,6 @@ let
     pango
     vulkan-loader
   ];
-  steamRun = (pkgs.steam.override {
-    extraPkgs = pkgs': with pkgs'; [
-      libdrm
-      libglvnd
-      libcxx
-      libpulseaudio
-      mesa
-      libx11
-      libxcomposite
-      libxcursor
-      libxdamage
-      libxext
-      libxfixes
-      libxi
-      libxinerama
-      libxrandr
-      libxrender
-      libxscrnsaver
-      libxtst
-      libxxf86vm
-      libice
-      libsm
-      libxcb
-      libxkbfile
-      libxshmfence
-      libxcb-util
-      libxcb-cursor
-      libxcb-image
-      libxcb-keysyms
-      libxcb-render-util
-      libxcb-wm
-    ];
-  }).run;
   eclipsa-android-emulator = pkgs.writeShellScriptBin "eclipsa-android-emulator" ''
     set -euo pipefail
 
@@ -77,7 +44,7 @@ let
     export JAVA_HOME="${javaHome}"
     export QT_QPA_PLATFORM="xcb"
 
-    exec "${steamRun}/bin/steam-run" \
+    exec steam-run \
       "$ANDROID_SDK_ROOT/emulator/emulator" \
       -gpu host \
       -feature -Vulkan \
@@ -213,10 +180,6 @@ in
     enable = true;
   };
 
-  xdg.configFile."monitors.xml" = {
-    source = ../../gnome/monitors.xml;
-    force = true;
-  };
   xdg.configFile."autostart/proton.vpn.app.gtk.desktop".source =
     "${pkgs.proton-vpn}/share/applications/proton.vpn.app.gtk.desktop";
   xdg.configFile."mimeapps.list".force = true;
@@ -289,7 +252,6 @@ in
     gcc
     gnumake
     jdk17_headless
-    steamRun
     pkg-config
     gtk4
     xorg-server
@@ -298,6 +260,8 @@ in
     vscode
     libreoffice
     gimp
+    imagemagick
+    inkscape
     obsidian
     lmstudio
     git
@@ -358,6 +322,7 @@ in
     llm-agents.mimo-code
     flameshotGui
     tmux
+    screen
     apktool
     apksigner
     jadx
@@ -406,36 +371,6 @@ in
       "application/vnd.oasis.opendocument.presentation-template" = [ "impress.desktop" ];
       "application/vnd.openxmlformats-officedocument.presentationml.presentation" = [ "impress.desktop" ];
       "application/vnd.openxmlformats-officedocument.presentationml.template" = [ "impress.desktop" ];
-    };
-  };
-
-  dconf.settings = {
-    "org/gnome/desktop/interface" = {
-      text-scaling-factor = 1.0;
-    };
-
-    "org/gnome/mutter" = {
-      experimental-features = [ ];
-    };
-
-    "org/gnome/shell" = {
-      disable-user-extensions = false;
-      enabled-extensions = [
-        "appindicatorsupport@rgcjonas.gmail.com"
-        "dash-to-dock@micxgx.gmail.com"
-        "blur-my-shell@aunetx"
-        "kimpanel2@kde.org"
-      ];
-    };
-
-    "org/gnome/shell/extensions/dash-to-dock" = {
-      autohide = true;
-      dock-fixed = false;
-      dock-position = "BOTTOM";
-      require-pressure-to-show = false;
-      show-delay = 0.0;
-      hide-delay = 0.2;
-      intellihide = false;
     };
   };
 }
