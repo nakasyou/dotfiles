@@ -269,6 +269,7 @@ in
     gnupg
     google-cloud-sdk
     google-cloud-sql-proxy
+    wrangler
     ffmpeg
     pulseaudio
     easyeffects

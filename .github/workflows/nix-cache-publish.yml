@@ -1,0 +1,61 @@
+name: Publish Nix binary cache
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 180
+    concurrency:
+      group: nix-cache-publish
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            runner: ubuntu-24.04
+            cache_root: linux
+            targets: >-
+              .#nixosConfigurations.p14s.config.system.build.toplevel
+              .#nixosConfigurations.p14s.config.home-manager.users.nakasyou.home.activationPackage
+          - name: macOS
+            runner: macos-15
+            cache_root: darwin
+            targets: >-
+              .#darwinConfigurations.mac-mini.system
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            accept-flake-config = true
+
+      - name: Publish signed cache objects
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NIX_CACHE_SIGNING_KEY: ${{ secrets.NIX_CACHE_SIGNING_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_KV_NAMESPACE_ID: ${{ secrets.CLOUDFLARE_KV_NAMESPACE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          NIX_CACHE_ROOT: ${{ matrix.cache_root }}
+        run: |
+          chmod +x scripts/publish-nix-cache.sh
+          results=()
+          for target in ${{ matrix.targets }}; do
+            nix build --print-build-logs --no-link "$target"
+            results+=("$(nix path-info "$target")")
+          done
+          scripts/publish-nix-cache.sh "${results[@]}"

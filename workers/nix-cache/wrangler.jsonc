@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nix-cache-router",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-10",
+  "workers_dev": false,
+
+  // Bind cache.nakasyou.how/* in the dashboard or with `wrangler deploy
+  // --route cache.nakasyou.how/*`. Keeping the zone ID out of this repository
+  // makes the configuration portable.
+  "vars": {
+    "GITHUB_REPOSITORY": "nakasyou/dotfiles"
+  },
+
+  "kv_namespaces": [
+    {
+      "binding": "NIX_CACHE_INDEX",
+      "id": "4172e4b723104be7b8a090d21f36260f"
+    }
+  ]
+}

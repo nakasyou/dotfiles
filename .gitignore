@@ -2,3 +2,4 @@ result/
 result
 .env
 services/**/.env
+node_modules/
