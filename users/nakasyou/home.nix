@@ -319,7 +319,11 @@ in
     vastai
     codexStandalone
     codex-desktop
-    llm-agents.grok
+    (llm-agents.grok.overrideAttrs (_: {
+      # grok's version check invokes bubblewrap, which GitHub-hosted Linux
+      # runners cannot use because unprivileged UID maps are disabled.
+      doInstallCheck = false;
+    }))
     llm-agents.mimo-code
     flameshotGui
     tmux

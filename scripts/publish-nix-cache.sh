@@ -70,7 +70,7 @@ if ((${#new_paths[@]} > 0)); then
     for ((i = start; i < end; i++)); do
       gh release upload "$tag" "${new_files[$i]}"
       asset=${new_files[$i]##*/}
-      entry=$(jq --compact-output --arg tag "$tag" --arg asset "$asset" '{tag: $tag, asset: $asset}')
+      entry=$(jq --null-input --compact-output --arg tag "$tag" --arg asset "$asset" '{tag: $tag, asset: $asset}')
       tmp_index="$workdir/index.next.json"
       jq --arg path "${new_paths[$i]}" --argjson entry "$entry" '.objects[$path] = $entry' "$index_file" > "$tmp_index"
       mv "$tmp_index" "$index_file"
