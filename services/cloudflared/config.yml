@@ -20,4 +20,6 @@ ingress:
       keepAliveConnections: 50
   - hostname: csbie.nakasyou.how
     service: http://127.0.0.1:18787
+  - hostname: status.nakasyou.how
+    service: http://127.0.0.1:3001
   - service: http_status:404

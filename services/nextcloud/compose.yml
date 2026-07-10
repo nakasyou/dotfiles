@@ -15,7 +15,8 @@ services:
       retries: 10
 
   app:
-    image: nextcloud:apache
+    build: .
+    image: nakasyou-nextcloud:apache-ffmpeg
     container_name: nextcloud-app
     restart: unless-stopped
     depends_on:
