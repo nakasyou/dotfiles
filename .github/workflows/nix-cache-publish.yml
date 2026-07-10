@@ -8,16 +8,18 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: nix-cache-publish
+  cancel-in-progress: false
+
 jobs:
   publish:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 180
-    concurrency:
-      group: nix-cache-publish
-      cancel-in-progress: false
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           - name: Linux
