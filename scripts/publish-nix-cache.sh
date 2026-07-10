@@ -63,13 +63,26 @@ if ((${#new_paths[@]} > 0)); then
   for start in $(seq 0 900 $((${#new_paths[@]} - 1))); do
     shard=$((shard + 1))
     tag=$(printf 'nix-cache-%s-%s-%03d' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$shard")
-    gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes "Nix binary-cache shard."
+    release_id=$(gh api --method POST "repos/$GITHUB_REPOSITORY/releases" \
+      -f tag_name="$tag" \
+      -f target_commitish="$GITHUB_SHA" \
+      -f name="$tag" \
+      -f body="Nix binary-cache shard." \
+      --jq '.id')
 
     end=$((start + 900))
     if ((end > ${#new_paths[@]})); then end=${#new_paths[@]}; fi
     for ((i = start; i < end; i++)); do
-      gh release upload "$tag" "${new_files[$i]}"
       asset=${new_files[$i]##*/}
+      encoded_asset=$(jq --null-input --raw-output --arg value "$asset" '$value | @uri')
+      curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 5 \
+        --request POST \
+        --header "Authorization: Bearer $GH_TOKEN" \
+        --header 'Accept: application/vnd.github+json' \
+        --header 'Content-Type: application/octet-stream' \
+        --data-binary "@${new_files[$i]}" \
+        "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$release_id/assets?name=$encoded_asset" \
+        >/dev/null
       entry=$(jq --null-input --compact-output --arg tag "$tag" --arg asset "$asset" '{tag: $tag, asset: $asset}')
       tmp_index="$workdir/index.next.json"
       jq --arg path "${new_paths[$i]}" --argjson entry "$entry" '.objects[$path] = $entry' "$index_file" > "$tmp_index"
