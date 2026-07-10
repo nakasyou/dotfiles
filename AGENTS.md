@@ -47,3 +47,15 @@ Git history may be sparse in this workspace snapshot, so follow conservative def
 
 ## Configuration Notes
 Avoid editing generated files casually. `hosts/*/hardware-configuration.nix` should usually change only after hardware reprobe, while user-specific paths and host names should stay consistent with `flake.nix` and `users/nakasyou/home.nix`.
+
+## Local Service and Cloudflare Notes
+Local Docker services live under `services/<name>/` in the repository and are copied to `~/services/<name>/` by the mac-mini nix-darwin activation script. Commit `compose.yml` and non-secret examples such as `env.example`; never commit real `.env` files or credentials.
+
+When adding a service exposed through Cloudflare Tunnel:
+- Add the service compose file under `services/<name>/`.
+- Add the launchd/docker-compose management in `modules/darwin/local-services.nix`.
+- Add the ingress hostname to `services/cloudflared/config.yml`, pointing to the localhost port.
+- If the hostname is new, create the Cloudflare DNS tunnel route as an external state change, for example `cloudflared tunnel route dns <tunnel-id> <hostname>`.
+- Run `sudo darwin-rebuild switch --flake .#mac-mini` and restart affected launchd services.
+
+Do not put Cloudflare API tokens or service passwords in Nix files. If DNS records should become fully declarative, add a dedicated Terraform/OpenTofu configuration instead of hiding Cloudflare API mutations inside nix-darwin activation scripts.

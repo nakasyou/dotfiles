@@ -1,0 +1,18 @@
+services:
+  csbie:
+    image: git.yutakobayashi.com/nakasyou/mnie:latest
+    container_name: csbie
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18787:8787"
+    env_file:
+      - .env
+    environment:
+      MNIE_ORIGIN: https://csbie.nakasyou.how
+      MNIE_CORS_ORIGIN: https://csbie.nakasyou.how
+      MNIE_RP_ID: csbie.nakasyou.how
+      MNIE_DATABASE_PATH: /app/data/csbie.sqlite
+      MNIE_KEYRING_BACKEND: sqlite
+      MNIE_KEYRING_SQLITE_PATH: /app/data/csbie.keyring.sqlite
+    volumes:
+      - ./data:/app/data

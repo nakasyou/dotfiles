@@ -11,4 +11,15 @@ ingress:
       keepAliveConnections: 1000
       keepAliveTimeout: 10m
       tcpKeepAlive: 30s
+  - hostname: litellm.nakasyou.how
+    service: http://127.0.0.1:4000
+    originRequest:
+      connectTimeout: 5m
+      tlsTimeout: 30s
+      tcpKeepAlive: 30s
+      keepAliveConnections: 50
+  - hostname: csbie.nakasyou.how
+    service: http://127.0.0.1:18787
+  - hostname: status.nakasyou.how
+    service: http://127.0.0.1:3001
   - service: http_status:404
