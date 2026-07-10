@@ -28,7 +28,6 @@ umask 077
 printf '%s\n' "$NIX_CACHE_SIGNING_KEY" > "$key_file"
 
 nix copy \
-  --recursive \
   --to "file://$cache_dir?compression=zstd&secret-key=$key_file" \
   "$@"
 
