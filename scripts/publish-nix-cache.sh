@@ -3,13 +3,11 @@
 set -euo pipefail
 
 : "${NIX_CACHE_SIGNING_KEY:?Set NIX_CACHE_SIGNING_KEY to the cache private key}"
-: "${CLOUDFLARE_ACCOUNT_ID:?Set CLOUDFLARE_ACCOUNT_ID}"
-: "${CLOUDFLARE_KV_NAMESPACE_ID:?Set CLOUDFLARE_KV_NAMESPACE_ID}"
-: "${CLOUDFLARE_API_TOKEN:?Set CLOUDFLARE_API_TOKEN}"
 : "${GITHUB_REPOSITORY:?Run this from GitHub Actions or set GITHUB_REPOSITORY}"
 : "${GITHUB_RUN_ID:?Set GITHUB_RUN_ID}"
 : "${GITHUB_RUN_ATTEMPT:=1}"
 : "${NIX_CACHE_ROOT:?Set NIX_CACHE_ROOT to a stable cache root, such as linux or darwin}"
+: "${GH_TOKEN:?Set GH_TOKEN to a token allowed to create Releases}"
 
 if (($# == 0)); then
   echo "usage: $0 STORE_PATH..." >&2
@@ -17,37 +15,130 @@ if (($# == 0)); then
 fi
 
 workdir=$(mktemp -d)
-trap 'rm -rf "$workdir"' EXIT
 cache_dir="$workdir/cache"
 key_file="$workdir/cache-private.key"
 index_file="$workdir/index.json"
-compressed_index="$workdir/index.json.zst"
-delta_file="$workdir/kv-delta.json"
+publish_succeeded=false
+index_published=false
+
+cleanup() {
+  rm -rf "$workdir"
+}
+
+wait_for_github_limit() {
+  local headers=$1 attempt=$2 retry_after reset now delay
+  retry_after=$(awk 'BEGIN { IGNORECASE = 1 } /^retry-after:/ { gsub("\\r", "", $2); print $2; exit }' "$headers")
+  reset=$(awk 'BEGIN { IGNORECASE = 1 } /^x-ratelimit-reset:/ { gsub("\\r", "", $2); print $2; exit }' "$headers")
+  now=$(date +%s)
+  if [[ $retry_after =~ ^[0-9]+$ ]]; then
+    delay=$retry_after
+  elif [[ $reset =~ ^[0-9]+$ ]] && ((reset > now)); then
+    delay=$((reset - now + 5))
+  else
+    delay=$((attempt * 30))
+    ((delay > 300)) && delay=300
+  fi
+  ((delay < 5)) && delay=5
+  echo "GitHub rate limit reached; waiting ${delay}s before retrying." >&2
+  sleep "$delay"
+}
+
+upload_asset() {
+  local release_id=$1 file=$2 asset=$3 attempt=0 headers body status encoded_asset
+  encoded_asset=$(jq --null-input --raw-output --arg value "$asset" '$value | @uri')
+
+  while :; do
+    attempt=$((attempt + 1))
+    headers=$(mktemp "$workdir/github-headers.XXXXXX")
+    body=$(mktemp "$workdir/github-body.XXXXXX")
+    status=$(curl --silent --show-error --output "$body" --dump-header "$headers" --write-out '%{http_code}' \
+      --request POST \
+      --header "Authorization: Bearer $GH_TOKEN" \
+      --header 'Accept: application/vnd.github+json' \
+      --header 'Content-Type: application/octet-stream' \
+      --data-binary "@$file" \
+      "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$release_id/assets?name=$encoded_asset") || status=000
+
+    case "$status" in
+      200|201)
+        rm -f "$headers" "$body"
+        return 0
+        ;;
+      403|429)
+        cat "$body" >&2
+        wait_for_github_limit "$headers" "$attempt"
+        rm -f "$headers" "$body"
+        ;;
+      422)
+        # A response can be lost after GitHub has accepted an upload.  The
+        # resulting duplicate-name response means this exact asset is present.
+        if jq -e '.errors[]? | select(.code == "already_exists")' "$body" >/dev/null 2>&1; then
+          rm -f "$headers" "$body"
+          return 0
+        fi
+        cat "$body" >&2
+        rm -f "$headers" "$body"
+        return 1
+        ;;
+      *)
+        cat "$body" >&2
+        rm -f "$headers" "$body"
+        return 1
+        ;;
+    esac
+  done
+}
+
+publish_index() {
+  [[ -f $index_file ]] || return 0
+
+  # Keep one stable Release asset.  The Worker fetches this JSON at most once
+  # per Cache API TTL, so cache lookups never require a KV read.
+  if gh release view nix-cache-index >/dev/null 2>&1; then
+    gh release upload nix-cache-index "$index_file#index.json" --clobber
+  else
+    gh release create nix-cache-index --target "$GITHUB_SHA" --title "Nix cache index" --notes "Mutable index for the Nix cache." "$index_file#index.json"
+  fi
+  index_published=true
+}
+
+finalize() {
+  local status=$?
+  trap - EXIT
+
+  # On a failed upload the in-memory index already contains every asset whose
+  # upload returned success. Publish it before propagating the failure. GC is
+  # deliberately skipped below unless the complete run succeeds.
+  if ! publish_index; then
+    echo "Failed to publish the Nix cache index during finalization." >&2
+    ((status == 0)) && status=1
+  fi
+  cleanup
+  exit "$status"
+}
+trap finalize EXIT
 
 umask 077
 printf '%s\n' "$NIX_CACHE_SIGNING_KEY" > "$key_file"
 
-nix copy \
-  --to "file://$cache_dir?compression=zstd&secret-key=$key_file" \
-  "$@"
+nix copy --to "file://$cache_dir?compression=zstd&secret-key=$key_file" "$@"
 
 printf '%s\n' '{"format":2,"objects":{},"roots":{}}' > "$index_file"
 if gh release view nix-cache-index >/dev/null 2>&1; then
-  gh release download nix-cache-index --pattern index.json.zst --dir "$workdir"
-  zstd --decompress --stdout "$workdir/index.json.zst" > "$index_file"
+  mkdir "$workdir/index-download"
+  if gh release view nix-cache-index --json assets --jq '.assets[].name' | grep --fixed-strings --line-regexp index.json >/dev/null; then
+    gh release download nix-cache-index --pattern index.json --dir "$workdir/index-download"
+    jq '.format = 2 | .objects //= {} | .roots //= {}' "$workdir/index-download/index.json" > "$index_file"
+  elif gh release view nix-cache-index --json assets --jq '.assets[].name' | grep --fixed-strings --line-regexp index.json.zst >/dev/null; then
+    # One-time compatibility path for the previous compressed index format.
+    gh release download nix-cache-index --pattern index.json.zst --dir "$workdir/index-download"
+    zstd --decompress --stdout "$workdir/index-download/index.json.zst" | jq '.format = 2 | .objects //= {} | .roots //= {}' > "$index_file"
+  fi
 fi
-jq '.format = 2 | .objects //= {} | .roots //= {}' "$index_file" > "$workdir/index.normalized.json"
-mv "$workdir/index.normalized.json" "$index_file"
 
 declare -a paths files
-while IFS= read -r -d '' file; do
-  paths+=("/nar/${file##*/}")
-  files+=("$file")
-done < <(find "$cache_dir/nar" -type f -print0)
-while IFS= read -r -d '' file; do
-  paths+=("/${file##*/}")
-  files+=("$file")
-done < <(find "$cache_dir" -maxdepth 1 -type f -name '*.narinfo' -print0)
+while IFS= read -r -d '' file; do paths+=("/nar/${file##*/}"); files+=("$file"); done < <(find "$cache_dir/nar" -type f -print0)
+while IFS= read -r -d '' file; do paths+=("/${file##*/}"); files+=("$file"); done < <(find "$cache_dir" -maxdepth 1 -type f -name '*.narinfo' -print0)
 
 declare -a new_paths new_files
 for i in "${!paths[@]}"; do
@@ -57,39 +148,19 @@ for i in "${!paths[@]}"; do
   fi
 done
 
-printf '%s\n' '[]' > "$delta_file"
 shard=0
 if ((${#new_paths[@]} > 0)); then
   for start in $(seq 0 900 $((${#new_paths[@]} - 1))); do
     shard=$((shard + 1))
     tag=$(printf 'nix-cache-%s-%s-%03d' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$shard")
-    release_id=$(gh api --method POST "repos/$GITHUB_REPOSITORY/releases" \
-      -f tag_name="$tag" \
-      -f target_commitish="$GITHUB_SHA" \
-      -f name="$tag" \
-      -f body="Nix binary-cache shard." \
-      --jq '.id')
-
-    end=$((start + 900))
-    if ((end > ${#new_paths[@]})); then end=${#new_paths[@]}; fi
+    release_id=$(gh api --method POST "repos/$GITHUB_REPOSITORY/releases" -f tag_name="$tag" -f target_commitish="$GITHUB_SHA" -f name="$tag" -f body="Nix binary-cache shard." --jq '.id')
+    end=$((start + 900)); ((end > ${#new_paths[@]})) && end=${#new_paths[@]}
     for ((i = start; i < end; i++)); do
       asset=${new_files[$i]##*/}
-      encoded_asset=$(jq --null-input --raw-output --arg value "$asset" '$value | @uri')
-      curl --fail-with-body --silent --show-error --retry 5 --retry-all-errors --retry-delay 5 \
-        --request POST \
-        --header "Authorization: Bearer $GH_TOKEN" \
-        --header 'Accept: application/vnd.github+json' \
-        --header 'Content-Type: application/octet-stream' \
-        --data-binary "@${new_files[$i]}" \
-        "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$release_id/assets?name=$encoded_asset" \
-        >/dev/null
+      upload_asset "$release_id" "${new_files[$i]}" "$asset"
       entry=$(jq --null-input --compact-output --arg tag "$tag" --arg asset "$asset" '{tag: $tag, asset: $asset}')
-      tmp_index="$workdir/index.next.json"
-      jq --arg path "${new_paths[$i]}" --argjson entry "$entry" '.objects[$path] = $entry' "$index_file" > "$tmp_index"
-      mv "$tmp_index" "$index_file"
-      tmp_delta="$workdir/delta.next.json"
-      jq --arg key "path:${new_paths[$i]}" --arg value "$entry" '. + [{key: $key, value: $value}]' "$delta_file" > "$tmp_delta"
-      mv "$tmp_delta" "$delta_file"
+      jq --arg path "${new_paths[$i]}" --argjson entry "$entry" '.objects[$path] = $entry' "$index_file" > "$workdir/index.next.json"
+      mv "$workdir/index.next.json" "$index_file"
     done
   done
 fi
@@ -99,54 +170,9 @@ jq --arg root "$NIX_CACHE_ROOT" --argjson paths "$root_paths" '.roots[$root] = $
 mv "$workdir/index.with-root.json" "$index_file"
 
 removed_file="$workdir/removed.json"
-jq '
-  . as $index
-  | [$index.roots[]?[]] | unique as $live
-  | [
-      $index.objects
-      | to_entries[]
-      | select(.key as $key | ($live | index($key) | not))
-    ]
-' "$index_file" > "$removed_file"
-
+jq '. as $index | [$index.roots[]?[]] | unique as $live | [$index.objects | to_entries[] | select(.key as $key | ($live | index($key) | not))]' "$index_file" > "$removed_file"
 jq --slurpfile removed "$removed_file" 'reduce $removed[0][] as $entry (. ; del(.objects[$entry.key]))' "$index_file" > "$workdir/index.gc.json"
 mv "$workdir/index.gc.json" "$index_file"
+publish_succeeded=true
 
-zstd --quiet --force "$index_file" --output "$compressed_index"
-if gh release view nix-cache-index >/dev/null 2>&1; then
-  gh release upload nix-cache-index "$compressed_index" --clobber
-else
-  gh release create nix-cache-index --target "$GITHUB_SHA" --title "Nix cache index" --notes "Mutable index for the Nix cache." "$compressed_index"
-fi
-
-if (($(jq 'length' "$delta_file") > 0)); then
-  for start in $(seq 0 10000 $(($(jq 'length' "$delta_file") - 1))); do
-    batch_file="$workdir/kv-batch.json"
-    jq --argjson start "$start" '.[$start:($start + 10000)]' "$delta_file" > "$batch_file"
-    curl --fail-with-body --silent --show-error \
-      --request PUT \
-      --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-      --header 'Content-Type: application/json' \
-      --data-binary "@$batch_file" \
-      "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces/$CLOUDFLARE_KV_NAMESPACE_ID/bulk" \
-      | jq --exit-status '.success == true' >/dev/null
-  done
-fi
-
-removed_keys_file="$workdir/removed-keys.json"
-jq '[.[].key | "path:" + .]' "$removed_file" > "$removed_keys_file"
-if (($(jq 'length' "$removed_keys_file") > 0)); then
-  for start in $(seq 0 10000 $(($(jq 'length' "$removed_keys_file") - 1))); do
-    batch_file="$workdir/kv-delete-batch.json"
-    jq --argjson start "$start" '.[$start:($start + 10000)]' "$removed_keys_file" > "$batch_file"
-    curl --fail-with-body --silent --show-error \
-      --request DELETE \
-      --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-      --header 'Content-Type: application/json' \
-      --data-binary "@$batch_file" \
-      "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces/$CLOUDFLARE_KV_NAMESPACE_ID/bulk" \
-      | jq --exit-status '.success == true' >/dev/null
-  done
-fi
-
-echo "Published ${#new_paths[@]} new objects in $shard Release shard(s); removed $(jq 'length' "$removed_file") stale KV entries."
+echo "Published ${#new_paths[@]} new objects in $shard Release shard(s); removed $(jq 'length' "$removed_file") stale index entries."

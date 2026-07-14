@@ -10,12 +10,5 @@
   // makes the configuration portable.
   "vars": {
     "GITHUB_REPOSITORY": "nakasyou/dotfiles"
-  },
-
-  "kv_namespaces": [
-    {
-      "binding": "NIX_CACHE_INDEX",
-      "id": "4172e4b723104be7b8a090d21f36260f"
-    }
-  ]
+  }
 }
