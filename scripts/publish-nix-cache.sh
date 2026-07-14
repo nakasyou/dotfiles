@@ -43,6 +43,31 @@ wait_for_github_limit() {
   sleep "$delay"
 }
 
+github_command() {
+  local attempt=0 output status delay
+  while :; do
+    attempt=$((attempt + 1))
+    output=$(mktemp "$workdir/github-command.XXXXXX")
+    if "$@" >"$output" 2>&1; then
+      cat "$output"
+      rm -f "$output"
+      return 0
+    else
+      status=$?
+    fi
+    cat "$output" >&2
+    if ! grep --ignore-case --quiet 'rate limit' "$output"; then
+      rm -f "$output"
+      return "$status"
+    fi
+    rm -f "$output"
+    delay=$((attempt * 30))
+    ((delay > 300)) && delay=300
+    echo "GitHub API rate limit reached; waiting ${delay}s before retrying." >&2
+    sleep "$delay"
+  done
+}
+
 upload_asset() {
   local release_id=$1 file=$2 asset=$3 attempt=0 headers body status encoded_asset
   encoded_asset=$(jq --null-input --raw-output --arg value "$asset" '$value | @uri')
@@ -64,10 +89,20 @@ upload_asset() {
         rm -f "$headers" "$body"
         return 0
         ;;
-      403|429)
+      429)
         cat "$body" >&2
         wait_for_github_limit "$headers" "$attempt"
         rm -f "$headers" "$body"
+        ;;
+      403)
+        cat "$body" >&2
+        if grep --ignore-case --quiet 'rate limit' "$body"; then
+          wait_for_github_limit "$headers" "$attempt"
+          rm -f "$headers" "$body"
+        else
+          rm -f "$headers" "$body"
+          return 1
+        fi
         ;;
       422)
         # A response can be lost after GitHub has accepted an upload.  The
@@ -94,10 +129,10 @@ publish_index() {
 
   # Keep one stable Release asset.  The Worker fetches this JSON at most once
   # per Cache API TTL, so cache lookups never require a KV read.
-  if gh release view nix-cache-index >/dev/null 2>&1; then
-    gh release upload nix-cache-index "$index_file#index.json" --clobber
+  if github_command gh release view nix-cache-index >/dev/null; then
+    github_command gh release upload nix-cache-index "$index_file#index.json" --clobber
   else
-    gh release create nix-cache-index --target "$GITHUB_SHA" --title "Nix cache index" --notes "Mutable index for the Nix cache." "$index_file#index.json"
+    github_command gh release create nix-cache-index --target "$GITHUB_SHA" --title "Nix cache index" --notes "Mutable index for the Nix cache." "$index_file#index.json"
   fi
   index_published=true
 }
@@ -124,14 +159,14 @@ printf '%s\n' "$NIX_CACHE_SIGNING_KEY" > "$key_file"
 nix copy --to "file://$cache_dir?compression=zstd&secret-key=$key_file" "$@"
 
 printf '%s\n' '{"format":2,"objects":{},"roots":{}}' > "$index_file"
-if gh release view nix-cache-index >/dev/null 2>&1; then
+if github_command gh release view nix-cache-index >/dev/null; then
   mkdir "$workdir/index-download"
-  if gh release view nix-cache-index --json assets --jq '.assets[].name' | grep --fixed-strings --line-regexp index.json >/dev/null; then
-    gh release download nix-cache-index --pattern index.json --dir "$workdir/index-download"
+  if github_command gh release view nix-cache-index --json assets --jq '.assets[].name' | grep --fixed-strings --line-regexp index.json >/dev/null; then
+    github_command gh release download nix-cache-index --pattern index.json --dir "$workdir/index-download"
     jq '.format = 2 | .objects //= {} | .roots //= {}' "$workdir/index-download/index.json" > "$index_file"
-  elif gh release view nix-cache-index --json assets --jq '.assets[].name' | grep --fixed-strings --line-regexp index.json.zst >/dev/null; then
+  elif github_command gh release view nix-cache-index --json assets --jq '.assets[].name' | grep --fixed-strings --line-regexp index.json.zst >/dev/null; then
     # One-time compatibility path for the previous compressed index format.
-    gh release download nix-cache-index --pattern index.json.zst --dir "$workdir/index-download"
+    github_command gh release download nix-cache-index --pattern index.json.zst --dir "$workdir/index-download"
     zstd --decompress --stdout "$workdir/index-download/index.json.zst" | jq '.format = 2 | .objects //= {} | .roots //= {}' > "$index_file"
   fi
 fi
@@ -153,7 +188,7 @@ if ((${#new_paths[@]} > 0)); then
   for start in $(seq 0 900 $((${#new_paths[@]} - 1))); do
     shard=$((shard + 1))
     tag=$(printf 'nix-cache-%s-%s-%03d' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$shard")
-    release_id=$(gh api --method POST "repos/$GITHUB_REPOSITORY/releases" -f tag_name="$tag" -f target_commitish="$GITHUB_SHA" -f name="$tag" -f body="Nix binary-cache shard." --jq '.id')
+    release_id=$(github_command gh api --method POST "repos/$GITHUB_REPOSITORY/releases" -f tag_name="$tag" -f target_commitish="$GITHUB_SHA" -f name="$tag" -f body="Nix binary-cache shard." --jq '.id')
     end=$((start + 900)); ((end > ${#new_paths[@]})) && end=${#new_paths[@]}
     for ((i = start; i < end; i++)); do
       asset=${new_files[$i]##*/}
