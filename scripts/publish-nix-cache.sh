@@ -200,7 +200,9 @@ if ((${#new_paths[@]} > 0)); then
   done
 fi
 
-root_paths=$(jq --null-input '$ARGS.positional' --args "${paths[@]}")
+# The Linux closure contains enough paths to exceed execve's argument-size
+# limit if passed through `jq --args`.
+root_paths=$(printf '%s\n' "${paths[@]}" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')
 jq --arg root "$NIX_CACHE_ROOT" --argjson paths "$root_paths" '.roots[$root] = $paths' "$index_file" > "$workdir/index.with-root.json"
 mv "$workdir/index.with-root.json" "$index_file"
 
