@@ -207,10 +207,11 @@ printf '%s\n' "${paths[@]}" | jq --raw-input --slurp 'split("\n") | map(select(l
 jq --arg root "$NIX_CACHE_ROOT" --slurpfile paths "$root_paths_file" '.roots[$root] = $paths[0]' "$index_file" > "$workdir/index.with-root.json"
 mv "$workdir/index.with-root.json" "$index_file"
 
-removed_file="$workdir/removed.json"
-jq '. as $index | [$index.roots[]?[]] | unique as $live | [$index.objects | to_entries[] | select(.key as $key | ($live | index($key) | not))]' "$index_file" > "$removed_file"
-jq --slurpfile removed "$removed_file" 'reduce $removed[0][] as $entry (. ; del(.objects[$entry.key]))' "$index_file" > "$workdir/index.gc.json"
+live_paths_file="$workdir/live-paths.json"
+jq '[.roots[]?[]] | unique | map({key: ., value: true}) | from_entries' "$index_file" > "$live_paths_file"
+removed_count=$(jq --slurpfile live "$live_paths_file" '$live[0] as $live | [.objects | keys[] | select($live[.] | not)] | length' "$index_file")
+jq --slurpfile live "$live_paths_file" '$live[0] as $live | .objects |= with_entries(select($live[.key]))' "$index_file" > "$workdir/index.gc.json"
 mv "$workdir/index.gc.json" "$index_file"
 publish_succeeded=true
 
-echo "Published ${#new_paths[@]} new objects in $shard Release shard(s); removed $(jq 'length' "$removed_file") stale index entries."
+echo "Published ${#new_paths[@]} new objects in $shard Release shard(s); removed $removed_count stale index entries."
