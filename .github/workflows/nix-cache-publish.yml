@@ -54,7 +54,19 @@ jobs:
           chmod +x scripts/publish-nix-cache.sh
           results=()
           for target in ${{ matrix.targets }}; do
-            nix build --print-build-logs --no-link "$target"
+            max_attempts=5
+            for attempt in $(seq 1 "$max_attempts"); do
+              if nix build --print-build-logs --no-link "$target"; then
+                break
+              fi
+              if ((attempt == max_attempts)); then
+                echo "Failed to build $target after $max_attempts attempts." >&2
+                exit 1
+              fi
+              delay=$((attempt * 30))
+              echo "Build attempt $attempt/$max_attempts failed; retrying in ${delay}s." >&2
+              sleep "$delay"
+            done
             results+=("$(nix path-info "$target")")
           done
           scripts/publish-nix-cache.sh "${results[@]}"
