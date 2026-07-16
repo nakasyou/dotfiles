@@ -187,7 +187,7 @@ shard=0
 if ((${#new_paths[@]} > 0)); then
   for start in $(seq 0 900 $((${#new_paths[@]} - 1))); do
     shard=$((shard + 1))
-    tag=$(printf 'nix-cache-%s-%s-%03d' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$shard")
+    tag=$(printf 'nix-cache-%s-%s-%s-%03d' "$NIX_CACHE_ROOT" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$shard")
     release_id=$(github_command gh api --method POST "repos/$GITHUB_REPOSITORY/releases" -f tag_name="$tag" -f target_commitish="$GITHUB_SHA" -f name="$tag" -f body="Nix binary-cache shard." --jq '.id')
     end=$((start + 900)); ((end > ${#new_paths[@]})) && end=${#new_paths[@]}
     for ((i = start; i < end; i++)); do
