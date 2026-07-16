@@ -202,8 +202,9 @@ fi
 
 # The Linux closure contains enough paths to exceed execve's argument-size
 # limit if passed through `jq --args`.
-root_paths=$(printf '%s\n' "${paths[@]}" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))')
-jq --arg root "$NIX_CACHE_ROOT" --argjson paths "$root_paths" '.roots[$root] = $paths' "$index_file" > "$workdir/index.with-root.json"
+root_paths_file="$workdir/root-paths.json"
+printf '%s\n' "${paths[@]}" | jq --raw-input --slurp 'split("\n") | map(select(length > 0))' > "$root_paths_file"
+jq --arg root "$NIX_CACHE_ROOT" --slurpfile paths "$root_paths_file" '.roots[$root] = $paths[0]' "$index_file" > "$workdir/index.with-root.json"
 mv "$workdir/index.with-root.json" "$index_file"
 
 removed_file="$workdir/removed.json"
