@@ -81,7 +81,7 @@ upload_asset() {
       --header "Authorization: Bearer $GH_TOKEN" \
       --header 'Accept: application/vnd.github+json' \
       --header 'Content-Type: application/octet-stream' \
-      --data-binary "@$file" \
+      --upload-file "$file" \
       "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$release_id/assets?name=$encoded_asset") || status=000
 
     case "$status" in
