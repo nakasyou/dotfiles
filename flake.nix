@@ -31,6 +31,55 @@
           };
           modules = modules ++ [
             home-manager.nixosModules.home-manager
+            ({ pkgs, ... }:
+            let
+              codexDmgUrl = "https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg";
+              upstreamCodexDmg = pkgs.fetchurl {
+                url = codexDmgUrl;
+                hash = "sha256-QONIFOdOMJQ8IJ69TalM1N41gaUsW/++K88uSI1jYcY=";
+              };
+              currentCodexDmg = pkgs.fetchurl {
+                url = codexDmgUrl;
+                hash = "sha256-Wiq5aJ9Lo4/LE1VlJG1covEk1Tkzagoyr823IEDSFGY=";
+              };
+              upstreamCodexPackages = codex-desktop-linux.packages.${system};
+              patchedCodexDesktop = upstreamCodexPackages.codex-desktop.overrideAttrs (old: {
+                src =
+                  let
+                    payload = old.src;
+                  in
+                  pkgs.stdenv.mkDerivation {
+                    inherit (payload) pname version src nativeBuildInputs;
+                    dontConfigure = true;
+                    dontBuild = true;
+                    installPhase =
+                      let
+                        upstreamDmgPath = builtins.unsafeDiscardStringContext "${upstreamCodexDmg}";
+                        currentDmgPath = builtins.unsafeDiscardStringContext "${currentCodexDmg}";
+                        payloadContextKeys = builtins.attrNames (builtins.getContext payload.installPhase);
+                        upstreamDmgContextKeys = builtins.filter
+                          (key: builtins.match ".*-ChatGPT\\.dmg\\.drv" key != null)
+                          payloadContextKeys;
+                        payloadContext = builtins.removeAttrs
+                          (builtins.getContext payload.installPhase)
+                          upstreamDmgContextKeys;
+                        patchedInstallPhase = builtins.replaceStrings
+                          [ upstreamDmgPath ]
+                          [ currentDmgPath ]
+                          (builtins.unsafeDiscardStringContext payload.installPhase);
+                      in
+                      builtins.appendContext patchedInstallPhase
+                        (payloadContext // builtins.getContext "${currentCodexDmg}");
+                  };
+              });
+              patchedCodexDesktopInput = codex-desktop-linux // {
+                packages = codex-desktop-linux.packages // {
+                  "${system}" = upstreamCodexPackages // {
+                    codex-desktop = patchedCodexDesktop;
+                  };
+                };
+              };
+            in
             {
               nixpkgs.overlays = [
                 moonbit-overlay.overlays.default
@@ -39,9 +88,12 @@
               ];
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
-              home-manager.extraSpecialArgs = { inherit codex-desktop-linux system; };
+              home-manager.extraSpecialArgs = {
+                codex-desktop-linux = patchedCodexDesktopInput;
+                inherit system;
+              };
               home-manager.users.${username} = import ./users/nakasyou/home.nix;
-            }
+            })
           ];
         };
 
