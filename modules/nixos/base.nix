@@ -27,6 +27,11 @@
     allowUnfree = true;
     android_sdk.accept_license = true;
   };
+
+  security.pki.certificateFiles = [
+    ../../certificates/mitmproxy-ca-cert.pem
+  ];
+
   nix.gc = {
     automatic = true;
     dates = "weekly";
@@ -36,10 +41,10 @@
     experimental-features = [ "nix-command" "flakes" ];
     auto-optimise-store = true;
     extra-substituters = [
-      "https://nakasyou.cachix.org"
+      "https://cache.nakasyou.how"
     ];
     extra-trusted-public-keys = [
-      "nakasyou.cachix.org-1:hqgFXvJm9R1/CjzmM8Tms+6eJTMu7Oqg3bLgbSU6ojk="
+      "cache.nakasyou.how-1:BumjaqVgJE6uAuaJcoV1oeFKPEyPxZ73XNmxVskqQZM="
     ];
   };
   nix.nixPath = [

@@ -20,10 +20,10 @@
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
     extra-substituters = [
-      "https://nakasyou.cachix.org"
+      "https://cache.nakasyou.how"
     ];
     extra-trusted-public-keys = [
-      "nakasyou.cachix.org-1:hqgFXvJm9R1/CjzmM8Tms+6eJTMu7Oqg3bLgbSU6ojk="
+      "cache.nakasyou.how-1:BumjaqVgJE6uAuaJcoV1oeFKPEyPxZ73XNmxVskqQZM="
     ];
   };
 
