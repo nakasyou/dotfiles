@@ -84,7 +84,7 @@
               nixpkgs.overlays = [
                 moonbit-overlay.overlays.default
                 nix-vite-plus.overlays.default
-                llm-agents.overlays.default
+                llm-agents.overlays.shared-nixpkgs
               ];
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
