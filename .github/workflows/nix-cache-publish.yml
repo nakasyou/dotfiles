@@ -1,6 +1,7 @@
-name: Publish Nix binary cache
+name: Nix build and publish
 
 on:
+  pull_request:
   push:
     branches: [main, master]
   workflow_dispatch:
@@ -9,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: nix-cache-publish
+  group: nix-build-publish-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -47,14 +48,12 @@ jobs:
             extra-substituters = https://cache.nakasyou.how
             extra-trusted-public-keys = cache.nakasyou.how-1:BumjaqVgJE6uAuaJcoV1oeFKPEyPxZ73XNmxVskqQZM=
 
-      - name: Publish signed cache objects
-        env:
-          GH_TOKEN: ${{ github.token }}
-          NIX_CACHE_SIGNING_KEY: ${{ secrets.NIX_CACHE_SIGNING_KEY }}
-          NIX_CACHE_ROOT: ${{ matrix.cache_root }}
+      - name: Show flake outputs
+        run: nix flake show
+
+      - name: Build
         run: |
-          chmod +x scripts/publish-nix-cache.sh
-          results=()
+          : > "$RUNNER_TEMP/nix-cache-roots"
           for target in ${{ matrix.targets }}; do
             max_attempts=5
             for attempt in $(seq 1 "$max_attempts"); do
@@ -69,6 +68,16 @@ jobs:
               echo "Build attempt $attempt/$max_attempts failed; retrying in ${delay}s." >&2
               sleep "$delay"
             done
-            results+=("$(nix path-info "$target")")
+            nix path-info "$target" >> "$RUNNER_TEMP/nix-cache-roots"
           done
+
+      - name: Publish signed cache objects
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NIX_CACHE_SIGNING_KEY: ${{ secrets.NIX_CACHE_SIGNING_KEY }}
+          NIX_CACHE_ROOT: ${{ matrix.cache_root }}
+        run: |
+          chmod +x scripts/publish-nix-cache.sh
+          mapfile -t results < "$RUNNER_TEMP/nix-cache-roots"
           scripts/publish-nix-cache.sh "${results[@]}"

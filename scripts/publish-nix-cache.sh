@@ -18,8 +18,9 @@ workdir=$(mktemp -d)
 cache_dir="$workdir/cache"
 key_file="$workdir/cache-private.key"
 index_file="$workdir/index.json"
-publish_succeeded=false
-index_published=false
+closure_file="$workdir/closure-paths"
+custom_paths_file="$workdir/custom-paths"
+pair_file="$workdir/object-pairs.jsonl"
 
 cleanup() {
   rm -rf "$workdir"
@@ -156,8 +157,6 @@ trap finalize EXIT
 umask 077
 printf '%s\n' "$NIX_CACHE_SIGNING_KEY" > "$key_file"
 
-nix copy --to "file://$cache_dir?compression=zstd&secret-key=$key_file" "$@"
-
 printf '%s\n' '{"format":2,"objects":{},"roots":{}}' > "$index_file"
 if github_command gh release view nix-cache-index >/dev/null; then
   mkdir "$workdir/index-download"
@@ -171,9 +170,79 @@ if github_command gh release view nix-cache-index >/dev/null; then
   fi
 fi
 
+# GitHub Releases should contain only paths that are unavailable from the
+# official cache. References to official paths remain valid and are fetched
+# directly from cache.nixos.org by clients.
+printf '%s\n' "$@" | nix path-info --recursive --stdin | sort --unique > "$closure_file"
+: > "$custom_paths_file"
+export custom_paths_file
+if ! xargs --no-run-if-empty --max-procs=32 --max-args=1 bash -c '
+  path=$1
+  base=${path##*/}
+  hash=${base%%-*}
+  status=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
+    --retry 4 --retry-all-errors --retry-delay 2 \
+    "https://cache.nixos.org/${hash}.narinfo") || exit 1
+  case "$status" in
+    200) ;;
+    404) printf "%s\\n" "$path" >> "$custom_paths_file" ;;
+    *) echo "Unexpected cache.nixos.org response $status for $path" >&2; exit 1 ;;
+  esac
+' _ < "$closure_file"; then
+  echo "Failed while checking the official Nix cache." >&2
+  exit 1
+fi
+sort --unique --output "$custom_paths_file" "$custom_paths_file"
+
+official_count=$(($(wc -l < "$closure_file") - $(wc -l < "$custom_paths_file")))
+custom_count=$(wc -l < "$custom_paths_file")
+echo "Excluding $official_count paths available from cache.nixos.org; preparing $custom_count custom paths."
+
+mkdir -p "$cache_dir/nar"
+if ((custom_count > 0)); then
+  nix copy --no-recursive --stdin \
+    --to "file://$cache_dir?compression=zstd&secret-key=$key_file" \
+    < "$custom_paths_file"
+fi
+
 declare -a paths files
-while IFS= read -r -d '' file; do paths+=("/nar/${file##*/}"); files+=("$file"); done < <(find "$cache_dir/nar" -type f -print0)
-while IFS= read -r -d '' file; do paths+=("/${file##*/}"); files+=("$file"); done < <(find "$cache_dir" -maxdepth 1 -type f -name '*.narinfo' -print0)
+declare -A selected_paths
+: > "$pair_file"
+while IFS= read -r -d '' narinfo_file; do
+  nar_relative=$(sed -n 's/^URL: //p' "$narinfo_file")
+  narinfo_path="/${narinfo_file##*/}"
+  nar_path="/$nar_relative"
+  nar_file="$cache_dir/$nar_relative"
+
+  if [[ ! $nar_relative =~ ^nar/[A-Za-z0-9][A-Za-z0-9._-]*\.nar(\.(zst|xz|bz2|gz))?$ ]] || [[ ! -f $nar_file ]]; then
+    echo "Refusing to publish $narinfo_path without its NAR: $nar_relative" >&2
+    exit 1
+  fi
+
+  if [[ -z ${selected_paths[$nar_path]+x} ]]; then
+    paths+=("$nar_path")
+    files+=("$nar_file")
+    selected_paths[$nar_path]=1
+  fi
+  paths+=("$narinfo_path")
+  files+=("$narinfo_file")
+  selected_paths[$narinfo_path]=1
+  jq --null-input --compact-output \
+    --arg narinfo "$narinfo_path" --arg nar "$nar_path" \
+    '{narinfo: $narinfo, nar: $nar}' >> "$pair_file"
+done < <(find "$cache_dir" -maxdepth 1 -type f -name '*.narinfo' -print0)
+
+# If an earlier interrupted run indexed only one half of a narinfo/NAR pair,
+# remove both mappings so this run uploads a complete replacement pair.
+jq --slurpfile pairs "$pair_file" '
+  reduce $pairs[] as $pair (.;
+    if ((.objects[$pair.narinfo] != null) != (.objects[$pair.nar] != null))
+    then del(.objects[$pair.narinfo], .objects[$pair.nar])
+    else .
+    end
+  )
+' "$index_file" > "$workdir/index.repaired.json"
+mv "$workdir/index.repaired.json" "$index_file"
 
 declare -a new_paths new_files
 for i in "${!paths[@]}"; do
@@ -212,6 +281,4 @@ jq '[.roots[]?[]] | unique | map({key: ., value: true}) | from_entries' "$index_
 removed_count=$(jq --slurpfile live "$live_paths_file" '$live[0] as $live | [.objects | keys[] | select($live[.] | not)] | length' "$index_file")
 jq --slurpfile live "$live_paths_file" '$live[0] as $live | .objects |= with_entries(select($live[.key]))' "$index_file" > "$workdir/index.gc.json"
 mv "$workdir/index.gc.json" "$index_file"
-publish_succeeded=true
-
 echo "Published ${#new_paths[@]} new objects in $shard Release shard(s); removed $removed_count stale index entries."
