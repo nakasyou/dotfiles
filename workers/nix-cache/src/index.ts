@@ -1,5 +1,6 @@
 interface CacheObject {
   asset: string;
+  nar?: string;
   tag: string;
 }
 
@@ -14,7 +15,7 @@ interface Env {
 
 const INDEX_RELEASE_TAG = "nix-cache-index";
 const INDEX_ASSET_NAME = "index.json";
-const INDEX_CACHE_SECONDS = 300;
+const INDEX_CACHE_SECONDS = 60;
 
 const immutableRedirectHeaders = {
   "Cache-Control": "public, max-age=31536000, immutable",
@@ -103,6 +104,9 @@ export default {
     const index = await loadIndex(env.GITHUB_REPOSITORY);
     const object = index?.objects[pathname];
     if (!object) return new Response("Not found\n", { status: 404 });
+    if (pathname.endsWith(".narinfo") && (!object.nar || !index?.objects[object.nar])) {
+      return new Response("Incomplete cache entry\n", { status: 404 });
+    }
 
     const location = githubAssetUrl(env.GITHUB_REPOSITORY, object.tag, object.asset);
     if (!location) return new Response("Invalid cache index entry\n", { status: 500 });

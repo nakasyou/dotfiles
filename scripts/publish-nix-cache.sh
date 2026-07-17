@@ -22,6 +22,7 @@ closure_file="$workdir/closure-paths"
 custom_paths_file="$workdir/custom-paths"
 custom_hashes_file="$workdir/custom-hashes"
 pair_file="$workdir/object-pairs.jsonl"
+pair_map_file="$workdir/object-pairs.json"
 selected_paths_file="$workdir/selected-paths"
 
 cleanup() {
@@ -242,13 +243,16 @@ while IFS= read -r -d '' narinfo_file; do
     --arg narinfo "$narinfo_path" --arg nar "$nar_path" \
     '{narinfo: $narinfo, nar: $nar}' >> "$pair_file"
 done < <(find "$cache_dir" -maxdepth 1 -type f -name '*.narinfo' -print0)
+jq --slurp 'map({key: .narinfo, value: .nar}) | from_entries' "$pair_file" > "$pair_map_file"
 
-# If an earlier interrupted run indexed only one half of a narinfo/NAR pair,
-# remove both mappings so this run uploads a complete replacement pair.
+# A narinfo must explicitly point at the NAR generated in this run. Re-upload
+# old narinfos when recompression changed their NAR URL, or when the NAR mapping
+# is missing. This also repairs interrupted historical uploads.
 jq --slurpfile pairs "$pair_file" '
   reduce $pairs[] as $pair (.;
-    if ((.objects[$pair.narinfo] != null) != (.objects[$pair.nar] != null))
-    then del(.objects[$pair.narinfo], .objects[$pair.nar])
+    if (.objects[$pair.narinfo] != null and
+        (.objects[$pair.narinfo].nar != $pair.nar or .objects[$pair.nar] == null))
+    then del(.objects[$pair.narinfo])
     else .
     end
   )
@@ -273,7 +277,10 @@ if ((${#new_paths[@]} > 0)); then
     for ((i = start; i < end; i++)); do
       asset=${new_files[$i]##*/}
       upload_asset "$release_id" "${new_files[$i]}" "$asset"
-      entry=$(jq --null-input --compact-output --arg tag "$tag" --arg asset "$asset" '{tag: $tag, asset: $asset}')
+      nar=$(jq --raw-output --arg path "${new_paths[$i]}" '.[$path] // empty' "$pair_map_file")
+      entry=$(jq --null-input --compact-output \
+        --arg tag "$tag" --arg asset "$asset" --arg nar "$nar" \
+        '{tag: $tag, asset: $asset} + if $nar == "" then {} else {nar: $nar} end')
       jq --arg path "${new_paths[$i]}" --argjson entry "$entry" '.objects[$path] = $entry' "$index_file" > "$workdir/index.next.json"
       mv "$workdir/index.next.json" "$index_file"
     done

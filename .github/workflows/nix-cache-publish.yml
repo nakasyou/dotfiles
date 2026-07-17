@@ -14,7 +14,24 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  repair-index:
+    name: Repair cache index
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Repair existing narinfo links
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          chmod +x scripts/repair-nix-cache-index.sh
+          scripts/repair-nix-cache-index.sh
+          # Let every Worker location expire its previous Cache API entry.
+          sleep 70
+
   publish:
+    needs: repair-index
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 360
