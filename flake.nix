@@ -36,7 +36,7 @@
               codexDmgUrl = "https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg";
               upstreamCodexDmg = pkgs.fetchurl {
                 url = codexDmgUrl;
-                hash = "sha256-QONIFOdOMJQ8IJ69TalM1N41gaUsW/++K88uSI1jYcY=";
+                hash = "sha256-YVm2HsuQI2msEIhZYzp2sM821O/fURaXqnSZinoQpYg=";
               };
               currentCodexDmg = pkgs.fetchurl {
                 url = codexDmgUrl;
