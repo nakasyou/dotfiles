@@ -20,7 +20,9 @@ key_file="$workdir/cache-private.key"
 index_file="$workdir/index.json"
 closure_file="$workdir/closure-paths"
 custom_paths_file="$workdir/custom-paths"
+custom_hashes_file="$workdir/custom-hashes"
 pair_file="$workdir/object-pairs.jsonl"
+selected_paths_file="$workdir/selected-paths"
 
 cleanup() {
   rm -rf "$workdir"
@@ -173,10 +175,10 @@ fi
 # GitHub Releases should contain only paths that are unavailable from the
 # official cache. References to official paths remain valid and are fetched
 # directly from cache.nixos.org by clients.
-printf '%s\n' "$@" | nix path-info --recursive --stdin | sort --unique > "$closure_file"
+printf '%s\n' "$@" | nix path-info --recursive --stdin | sort -u > "$closure_file"
 : > "$custom_paths_file"
 export custom_paths_file
-if ! xargs --no-run-if-empty --max-procs=32 --max-args=1 bash -c '
+if ! xargs -P 32 -n 1 bash -c '
   path=$1
   base=${path##*/}
   hash=${base%%-*}
@@ -192,7 +194,7 @@ if ! xargs --no-run-if-empty --max-procs=32 --max-args=1 bash -c '
   echo "Failed while checking the official Nix cache." >&2
   exit 1
 fi
-sort --unique --output "$custom_paths_file" "$custom_paths_file"
+sort -u -o "$custom_paths_file" "$custom_paths_file"
 
 official_count=$(($(wc -l < "$closure_file") - $(wc -l < "$custom_paths_file")))
 custom_count=$(wc -l < "$custom_paths_file")
@@ -205,16 +207,18 @@ mkdir -p "$cache_dir/nar"
 nix copy --to "file://$cache_dir?compression=zstd&secret-key=$key_file" "$@"
 
 declare -a paths files
-declare -A custom_store_hashes selected_paths
+: > "$custom_hashes_file"
 while IFS= read -r path; do
   store_name=${path##*/}
-  custom_store_hashes[${store_name%%-*}]=1
+  printf '%s\n' "${store_name%%-*}" >> "$custom_hashes_file"
 done < "$custom_paths_file"
+sort -u -o "$custom_hashes_file" "$custom_hashes_file"
+: > "$selected_paths_file"
 : > "$pair_file"
 while IFS= read -r -d '' narinfo_file; do
   narinfo_name=${narinfo_file##*/}
   store_hash=${narinfo_name%.narinfo}
-  [[ -n ${custom_store_hashes[$store_hash]+x} ]] || continue
+  grep -Fqx "$store_hash" "$custom_hashes_file" || continue
 
   nar_relative=$(sed -n 's/^URL: //p' "$narinfo_file")
   narinfo_path="/$narinfo_name"
@@ -226,14 +230,14 @@ while IFS= read -r -d '' narinfo_file; do
     exit 1
   fi
 
-  if [[ -z ${selected_paths[$nar_path]+x} ]]; then
+  if ! grep -Fqx "$nar_path" "$selected_paths_file"; then
     paths+=("$nar_path")
     files+=("$nar_file")
-    selected_paths[$nar_path]=1
+    printf '%s\n' "$nar_path" >> "$selected_paths_file"
   fi
   paths+=("$narinfo_path")
   files+=("$narinfo_file")
-  selected_paths[$narinfo_path]=1
+  printf '%s\n' "$narinfo_path" >> "$selected_paths_file"
   jq --null-input --compact-output \
     --arg narinfo "$narinfo_path" --arg nar "$nar_path" \
     '{narinfo: $narinfo, nar: $nar}' >> "$pair_file"

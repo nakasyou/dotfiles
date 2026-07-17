@@ -79,5 +79,8 @@ jobs:
           NIX_CACHE_ROOT: ${{ matrix.cache_root }}
         run: |
           chmod +x scripts/publish-nix-cache.sh
-          mapfile -t results < "$RUNNER_TEMP/nix-cache-roots"
+          results=()
+          while IFS= read -r result; do
+            results+=("$result")
+          done < "$RUNNER_TEMP/nix-cache-roots"
           scripts/publish-nix-cache.sh "${results[@]}"
