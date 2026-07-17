@@ -73,7 +73,7 @@ jq --slurpfile pairs "$pairs_file" '
   ) |
   .objects as $objects |
   .roots |= with_entries(.value |= map(select(. as $path | $objects[$path] != null))) |
-  [.roots[]?[]] | unique | map({key: ., value: true}) | from_entries as $live |
+  ([.roots[]?[]] | unique | map({key: ., value: true}) | from_entries) as $live |
   .objects |= with_entries(select($live[.key]))
 ' "$index_file" > "$workdir/index.repaired.json"
 
