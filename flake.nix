@@ -40,7 +40,7 @@
               };
               currentCodexDmg = pkgs.fetchurl {
                 url = codexDmgUrl;
-                hash = "sha256-Wiq5aJ9Lo4/LE1VlJG1covEk1Tkzagoyr823IEDSFGY=";
+                hash = "sha256-/0WRUJkWEgB1SScNLSjF54zsa9asIAp62l7WwDE2m4c=";
               };
               upstreamCodexPackages = codex-desktop-linux.packages.${system};
               patchedCodexDesktop = upstreamCodexPackages.codex-desktop.overrideAttrs (old: {
