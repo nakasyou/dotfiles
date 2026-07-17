@@ -15,9 +15,6 @@ concurrency:
   group: nix-build-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  CACHIX_CACHE_NAME: nakasyou
-
 jobs:
   build:
     name: ${{ matrix.name }}
@@ -48,13 +45,8 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
             accept-flake-config = true
-
-      - name: Configure Cachix
-        uses: cachix/cachix-action@v17
-        with:
-          name: ${{ env.CACHIX_CACHE_NAME }}
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          skipPush: ${{ secrets.CACHIX_AUTH_TOKEN == '' }}
+            extra-substituters = https://cache.nakasyou.how
+            extra-trusted-public-keys = cache.nakasyou.how-1:BumjaqVgJE6uAuaJcoV1oeFKPEyPxZ73XNmxVskqQZM=
 
       - name: Show flake outputs
         run: nix flake show
