@@ -199,18 +199,25 @@ custom_count=$(wc -l < "$custom_paths_file")
 echo "Excluding $official_count paths available from cache.nixos.org; preparing $custom_count custom paths."
 
 mkdir -p "$cache_dir/nar"
-if ((custom_count > 0)); then
-  nix copy --no-recursive --stdin \
-    --to "file://$cache_dir?compression=zstd&secret-key=$key_file" \
-    < "$custom_paths_file"
-fi
+# A file binary cache requires referenced paths to be present while it is
+# assembled. Materialize the complete closure locally, then select only custom
+# narinfo/NAR pairs for Release upload below.
+nix copy --to "file://$cache_dir?compression=zstd&secret-key=$key_file" "$@"
 
 declare -a paths files
-declare -A selected_paths
+declare -A custom_store_hashes selected_paths
+while IFS= read -r path; do
+  store_name=${path##*/}
+  custom_store_hashes[${store_name%%-*}]=1
+done < "$custom_paths_file"
 : > "$pair_file"
 while IFS= read -r -d '' narinfo_file; do
+  narinfo_name=${narinfo_file##*/}
+  store_hash=${narinfo_name%.narinfo}
+  [[ -n ${custom_store_hashes[$store_hash]+x} ]] || continue
+
   nar_relative=$(sed -n 's/^URL: //p' "$narinfo_file")
-  narinfo_path="/${narinfo_file##*/}"
+  narinfo_path="/$narinfo_name"
   nar_path="/$nar_relative"
   nar_file="$cache_dir/$nar_relative"
 
