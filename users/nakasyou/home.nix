@@ -180,8 +180,11 @@ in
     enable = true;
   };
 
-  xdg.configFile."autostart/proton.vpn.app.gtk.desktop".source =
-    "${pkgs.proton-vpn}/share/applications/proton.vpn.app.gtk.desktop";
+  xdg.configFile."codex-desktop/electron-flags.conf".text = ''
+    --ozone-platform-hint=auto
+    --enable-wayland-ime
+  '';
+  xdg.configFile."codex-desktop/electron-flags.conf".force = true;
   xdg.configFile."mimeapps.list".force = true;
   xdg.dataFile."applications/mimeapps.list".force = true;
   home.file.".profile".text = ''
@@ -260,6 +263,7 @@ in
     vscode
     libreoffice
     gimp
+    gpick
     imagemagick
     inkscape
     obsidian
