@@ -1,0 +1,56 @@
+name: Update flake.lock
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-flake
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            accept-flake-config = true
+
+      - name: Update flake inputs
+        id: update
+        run: |
+          nix flake update
+
+          if git diff --quiet -- flake.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "flake.lock is already up to date"
+            exit 0
+          fi
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Check flake outputs
+        if: steps.update.outputs.changed == 'true'
+        run: nix flake show
+
+      - name: Commit and push updated lockfile
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          git config user.name "actions-user"
+          git config user.email "actions-user@users.noreply.github.com"
+          git add flake.lock
+          git commit -m "flake.lock: update inputs"
+          git push origin HEAD:${GITHUB_REF_NAME}
