@@ -49,11 +49,12 @@ jq --raw-output '
   .objects | to_entries[] |
   select(.key | endswith(".narinfo")) |
   [.key, .value.tag, .value.asset] | @tsv
-' "$index_file" | xargs -P 24 -n 3 bash -c '
+' "$index_file" | xargs -P 8 -n 3 bash -c '
   narinfo=$1
   tag=$2
   asset=$3
   nar=$(curl --fail --silent --show-error --location \
+    --retry 8 --retry-all-errors --retry-delay 2 \
     "https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/$asset" |
     sed -n "s|^URL: |/|p")
   if [[ ! $nar =~ ^/nar/[A-Za-z0-9][A-Za-z0-9._-]*\.nar(\.(zst|xz|bz2|gz))?$ ]]; then
