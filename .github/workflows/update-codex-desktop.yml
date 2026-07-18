@@ -1,8 +1,6 @@
-name: Update flake.lock
+name: Update Codex Desktop for Linux
 
 on:
-  schedule:
-    - cron: "0 0 * * *"
   workflow_dispatch:
 
 permissions:
@@ -10,12 +8,13 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: update-flake
+  group: update-codex-desktop
   cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-24.04
+    timeout-minutes: 360
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,43 +28,43 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
             accept-flake-config = true
+            extra-substituters = https://cache.nakasyou.how
+            extra-trusted-public-keys = cache.nakasyou.how-1:BumjaqVgJE6uAuaJcoV1oeFKPEyPxZ73XNmxVskqQZM=
 
-      - name: Update flake inputs
+      - name: Update Codex Desktop input
         id: update
         run: |
-          nix flake update \
-            nixpkgs \
-            home-manager \
-            nix-darwin \
-            moonbit-overlay \
-            nix-vite-plus \
-            llm-agents
+          nix flake update codex-desktop-linux
 
           if git diff --quiet -- flake.lock; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "flake.lock is already up to date"
+            echo "codex-desktop-linux is already up to date"
             exit 0
           fi
 
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Check flake outputs
+      - name: Build Home Manager configuration
         if: steps.update.outputs.changed == 'true'
-        run: nix flake show
+        run: >-
+          nix build
+          --print-build-logs
+          --no-link
+          .#nixosConfigurations.p14s.config.home-manager.users.nakasyou.home.activationPackage
 
-      - name: Create update pull request
+      - name: Create Codex Desktop update pull request
         if: steps.update.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: actions-user/update-flake-lock
+          branch: actions-user/update-codex-desktop-linux
           base: ${{ github.ref_name }}
           delete-branch: true
           author: actions-user <actions-user@users.noreply.github.com>
           committer: actions-user <actions-user@users.noreply.github.com>
-          commit-message: "flake.lock: update inputs"
-          title: "flake.lock: update inputs"
+          commit-message: "flake: update codex-desktop-linux"
+          title: "flake: update codex-desktop-linux"
           body: |
-            Automated update of the flake inputs, excluding `codex-desktop-linux`.
+            Manually requested update of the `codex-desktop-linux` input.
 
-            The flake outputs were evaluated with `nix flake show` before opening this PR.
+            The P14s Home Manager activation package was built successfully before opening this PR.
