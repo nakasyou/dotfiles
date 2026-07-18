@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: update-flake
@@ -46,11 +47,19 @@ jobs:
         if: steps.update.outputs.changed == 'true'
         run: nix flake show
 
-      - name: Commit and push updated lockfile
+      - name: Create update pull request
         if: steps.update.outputs.changed == 'true'
-        run: |
-          git config user.name "actions-user"
-          git config user.email "actions-user@users.noreply.github.com"
-          git add flake.lock
-          git commit -m "flake.lock: update inputs"
-          git push origin HEAD:${GITHUB_REF_NAME}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: actions-user/update-flake-lock
+          base: ${{ github.ref_name }}
+          delete-branch: true
+          author: actions-user <actions-user@users.noreply.github.com>
+          committer: actions-user <actions-user@users.noreply.github.com>
+          commit-message: "flake.lock: update inputs"
+          title: "flake.lock: update inputs"
+          body: |
+            Automated update of the flake inputs.
+
+            The flake outputs were evaluated with `nix flake show` before opening this PR.
