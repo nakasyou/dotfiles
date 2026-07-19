@@ -1,4 +1,4 @@
-{ config, lib, pkgs, codex-desktop-linux, system, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   androidSdkRoot = "${androidSdk}/libexec/android-sdk";
@@ -87,6 +87,12 @@ let
   codexStandalone = pkgs.writeShellScriptBin "codex" ''
     exec "${codexStandalonePath}" "$@"
   '';
+  codexDesktopInstall = pkgs.writeShellScriptBin "codex-desktop-install" ''
+    exec nix profile add github:ilysenko/codex-desktop-linux#codex-desktop "$@"
+  '';
+  codexDesktopUpdate = pkgs.writeShellScriptBin "codex-desktop-update" ''
+    exec nix profile upgrade codex-desktop "$@"
+  '';
   codexInstallerPath = lib.makeBinPath (with pkgs; [
     coreutils
     curl
@@ -155,7 +161,6 @@ let
       mainProgram = "vastai";
     };
   };
-  codex-desktop = codex-desktop-linux.packages.${system}.codex-desktop;
 in
 {
   home.username = "nakasyou";
@@ -322,7 +327,8 @@ in
     turbowarp-desktop
     vastai
     codexStandalone
-    codex-desktop
+    codexDesktopInstall
+    codexDesktopUpdate
     (llm-agents.grok.overrideAttrs (_: {
       # grok's version check invokes bubblewrap, which GitHub-hosted Linux
       # runners cannot use because unprivileged UID maps are disabled.

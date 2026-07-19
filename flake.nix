@@ -12,12 +12,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     moonbit-overlay.url = "github:moonbit-community/moonbit-overlay";
-    codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux";
     nix-vite-plus.url = "github:ryoppippi/nix-vite-plus";
     llm-agents.url = "github:numtide/llm-agents.nix";
   };
 
-  outputs = inputs@{ nixpkgs, home-manager, moonbit-overlay, codex-desktop-linux, nix-vite-plus, llm-agents, ... }:
+  outputs = inputs@{ nixpkgs, home-manager, moonbit-overlay, nix-vite-plus, llm-agents, ... }:
     let
       username = "nakasyou";
       linuxSystem = "x86_64-linux";
@@ -39,9 +38,6 @@
               ];
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
-              home-manager.extraSpecialArgs = {
-                inherit codex-desktop-linux system;
-              };
               home-manager.users.${username} = import ./users/nakasyou/home.nix;
             }
           ];

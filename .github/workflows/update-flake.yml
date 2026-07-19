@@ -66,6 +66,6 @@ jobs:
           commit-message: "flake.lock: update inputs"
           title: "flake.lock: update inputs"
           body: |
-            Automated update of the flake inputs, excluding `codex-desktop-linux`.
+            Automated update of the flake inputs.
 
             The flake outputs were evaluated with `nix flake show` before opening this PR.
