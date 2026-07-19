@@ -278,6 +278,7 @@ in
     gnupg
     google-cloud-sdk
     google-cloud-sql-proxy
+    rclone
     wrangler
     ffmpeg
     pulseaudio
