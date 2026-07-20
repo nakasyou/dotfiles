@@ -314,6 +314,7 @@ in
     waybar
     wlogout
     networkmanagerapplet
+    celluloid
     mpvpaper
     proton-vpn
     zip
