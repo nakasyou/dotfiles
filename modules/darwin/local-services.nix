@@ -115,7 +115,10 @@ let
     "${docker}" compose exec -T -u www-data app php occ config:system:set preview_ffprobe_path --value=/usr/bin/ffprobe
     "${docker}" compose exec -T -u www-data app php occ config:system:set preview_concurrency_new --type=integer --value=1
     "${docker}" compose exec -T -u www-data app php occ config:system:set preview_concurrency_all --type=integer --value=2
+    "${docker}" compose exec -T -u www-data app php occ config:system:set preview_max_filesize_image --type=integer --value=50
 
+    # Movie previews make random range reads against the S3-compatible backend.
+    # A folder containing many videos can otherwise occupy every Apache worker.
     "${docker}" compose exec -T -u www-data app php occ config:system:delete enabledPreviewProviders || true
     i=0
     for provider in \
@@ -129,7 +132,6 @@ let
       'OC\Preview\MarkDown' \
       'OC\Preview\TXT' \
       'OC\Preview\OpenDocument' \
-      'OC\Preview\Movie' \
       'OC\Preview\MP3'
     do
       "${docker}" compose exec -T -u www-data app php occ config:system:set enabledPreviewProviders "$i" --value="$provider"
