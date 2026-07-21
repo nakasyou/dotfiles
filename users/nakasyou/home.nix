@@ -295,6 +295,7 @@ in
     rust-analyzer
     clippy
     rustfmt
+    typst
     yt-dlp-nightly
     uv
     discord
