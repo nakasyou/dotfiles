@@ -231,9 +231,23 @@ in
       "${servicesDir}/uptime-kuma/monitors" \
       "${servicesDir}/csbie" \
       "${servicesDir}/csbie/data" \
+      "${homeDir}/.config/openai-tunnel" \
       "${homeDir}/.config/litellm" \
       "${homeDir}/.config/litellm/xai_oauth" \
       "${logsDir}"
+
+    if [ -f "${homeDir}/.config/openai-tunnel/csbie-api-key" ] && \
+       [ ! -e "${homeDir}/.config/openai-tunnel/runtime-api-key" ]; then
+      mv \
+        "${homeDir}/.config/openai-tunnel/csbie-api-key" \
+        "${homeDir}/.config/openai-tunnel/runtime-api-key"
+    fi
+    chown ${username}:staff "${homeDir}/.config/openai-tunnel"
+    chmod 0700 "${homeDir}/.config/openai-tunnel"
+    if [ -f "${homeDir}/.config/openai-tunnel/runtime-api-key" ]; then
+      chown ${username}:staff "${homeDir}/.config/openai-tunnel/runtime-api-key"
+      chmod 0600 "${homeDir}/.config/openai-tunnel/runtime-api-key"
+    fi
 
     install -o ${username} -g staff -m 0644 \
       "${../../services/nextcloud/compose.yml}" \

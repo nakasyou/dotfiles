@@ -219,6 +219,29 @@
         "type": "github"
       }
     },
+    "openai-secure-tunnel-nix": {
+      "inputs": {
+        "nix-darwin": [
+          "nix-darwin"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784642357,
+        "narHash": "sha256-marIXnXStYTyOIIezXLrKqSchRrbr5K1rlPlpDqCLOY=",
+        "owner": "nakasyou",
+        "repo": "openai-secure-tunnel-nix",
+        "rev": "c39714ab4ec28eada6b7b3c9e19d20572c0cc342",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nakasyou",
+        "repo": "openai-secure-tunnel-nix",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "home-manager": "home-manager",
@@ -226,7 +249,8 @@
         "moonbit-overlay": "moonbit-overlay",
         "nix-darwin": "nix-darwin",
         "nix-vite-plus": "nix-vite-plus",
-        "nixpkgs": "nixpkgs_4"
+        "nixpkgs": "nixpkgs_4",
+        "openai-secure-tunnel-nix": "openai-secure-tunnel-nix"
       }
     },
     "systems": {

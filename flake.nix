@@ -14,6 +14,11 @@
     moonbit-overlay.url = "github:moonbit-community/moonbit-overlay";
     nix-vite-plus.url = "github:ryoppippi/nix-vite-plus";
     llm-agents.url = "github:numtide/llm-agents.nix";
+    openai-secure-tunnel-nix = {
+      url = "github:nakasyou/openai-secure-tunnel-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nix-darwin.follows = "nix-darwin";
+    };
   };
 
   outputs = inputs@{ nixpkgs, home-manager, moonbit-overlay, nix-vite-plus, llm-agents, ... }:
@@ -47,7 +52,7 @@
         inputs.nix-darwin.lib.darwinSystem {
           inherit system;
           specialArgs = {
-            inherit hostname username;
+            inherit hostname inputs username;
           };
           modules = modules;
         };
