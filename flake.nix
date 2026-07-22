@@ -19,6 +19,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.nix-darwin.follows = "nix-darwin";
     };
+    twitter-api-safe-relay = {
+      url = "github:fa0311/twitter_api_safe_relay";
+      flake = false;
+    };
+    twitter-api-safe-relay-mcp = {
+      url = "github:nakasyou/twitter_api_safe_relay_mcp";
+      flake = false;
+    };
   };
 
   outputs = inputs@{ nixpkgs, home-manager, moonbit-overlay, nix-vite-plus, llm-agents, ... }:
@@ -57,6 +65,15 @@
           modules = modules;
         };
     in {
+      packages.${darwinSystem} = {
+        twitter-api-safe-relay = nixpkgs.legacyPackages.${darwinSystem}.callPackage ./pkgs/twitter-api-safe-relay.nix {
+          src = inputs.twitter-api-safe-relay;
+        };
+        twitter-api-safe-relay-mcp = nixpkgs.legacyPackages.${darwinSystem}.callPackage ./pkgs/twitter-api-safe-relay-mcp.nix {
+          src = inputs.twitter-api-safe-relay-mcp;
+        };
+      };
+
       nixosConfigurations.p14s = mkNixosHost {
         hostname = "p14s";
         modules = [ ./hosts/p14s ];

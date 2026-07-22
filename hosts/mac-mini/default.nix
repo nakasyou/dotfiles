@@ -1,25 +1,12 @@
 { inputs, pkgs, username, ... }:
 
-let
-  tunnelClientConfig = (pkgs.formats.yaml { }).generate "tunnel-client-csbie.yaml" {
-    config_version = 1;
-    control_plane = {
-      tunnel_id = "tunnel_6a5f7d1997748191a10ca77552ddb0ce";
-      api_key = "env:CONTROL_PLANE_API_KEY";
-    };
-    health.listen_addr = "127.0.0.1:18788";
-    admin_ui.open_browser = false;
-    mcp.server_urls = [{
-      channel = "csbie";
-      url = "http://127.0.0.1:18787/api/mcp";
-    }];
-  };
-  tunnelClient =
-    inputs.openai-secure-tunnel-nix.packages.${pkgs.stdenv.hostPlatform.system}.tunnel-client;
-in {
+{
   imports = [
+    inputs.openai-secure-tunnel-nix.darwinModules.tunnel-client
     ../../modules/darwin/cloudflared.nix
     ../../modules/darwin/local-services.nix
+    ../../modules/darwin/twitter-api-safe-relay.nix
+    ../../modules/darwin/twitter-api-safe-relay-mcp.nix
   ];
 
   nixpkgs.hostPlatform = "aarch64-darwin";
@@ -33,25 +20,25 @@ in {
     home = "/Users/${username}";
   };
 
-  launchd.daemons.tunnel-client-csbie.serviceConfig = {
-    ProgramArguments = [
-      "${tunnelClient}/bin/tunnel-client"
-      "run"
-      "--config"
-      "${tunnelClientConfig}"
-    ];
-    RunAtLoad = true;
-    KeepAlive = {
-      SuccessfulExit = false;
+  services.openai-tunnel-client.instances.csbie = {
+    enable = true;
+    apiKeyFile = "/Users/${username}/.config/openai-tunnel/runtime-api-key";
+    user = username;
+    group = "staff";
+    settings = {
+      config_version = 1;
+      control_plane.tunnel_id = "tunnel_6a602446f6708191a15202bcf5547d3d";
+      health.listen_addr = "127.0.0.1:18788";
+      admin_ui.open_browser = false;
+      mcp.server_urls = [{
+        channel = "main";
+        url = "http://127.0.0.1:18787/api/mcp";
+      }];
     };
-    ProcessType = "Background";
-    ThrottleInterval = 2;
-    UserName = username;
-    GroupName = "staff";
-    EnvironmentVariables.CONTROL_PLANE_API_KEY =
-      "file:/Users/${username}/.config/openai-tunnel/runtime-api-key";
-    StandardOutPath = "/var/log/tunnel-client-csbie.log";
-    StandardErrorPath = "/var/log/tunnel-client-csbie.error.log";
+    serviceConfig = {
+      StandardOutPath = "/Users/${username}/Library/Logs/tunnel-client-csbie.log";
+      StandardErrorPath = "/Users/${username}/Library/Logs/tunnel-client-csbie.error.log";
+    };
   };
 
   nix.settings = {

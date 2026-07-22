@@ -229,11 +229,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784642357,
-        "narHash": "sha256-marIXnXStYTyOIIezXLrKqSchRrbr5K1rlPlpDqCLOY=",
+        "lastModified": 1784686336,
+        "narHash": "sha256-HEQS+iIleWPGWg35qt7TXhFDSxkXaO+7Nwqx47h6Wj0=",
         "owner": "nakasyou",
         "repo": "openai-secure-tunnel-nix",
-        "rev": "c39714ab4ec28eada6b7b3c9e19d20572c0cc342",
+        "rev": "ea5858adb01e36e23492af1c2f905f7b7f331176",
         "type": "github"
       },
       "original": {
@@ -250,7 +250,9 @@
         "nix-darwin": "nix-darwin",
         "nix-vite-plus": "nix-vite-plus",
         "nixpkgs": "nixpkgs_4",
-        "openai-secure-tunnel-nix": "openai-secure-tunnel-nix"
+        "openai-secure-tunnel-nix": "openai-secure-tunnel-nix",
+        "twitter-api-safe-relay": "twitter-api-safe-relay",
+        "twitter-api-safe-relay-mcp": "twitter-api-safe-relay-mcp"
       }
     },
     "systems": {
@@ -307,6 +309,38 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "twitter-api-safe-relay": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784524623,
+        "narHash": "sha256-4FFUEwjnHK7k6kHgNpAXFxsH7nyPwKcBGbzITq5ERGw=",
+        "owner": "fa0311",
+        "repo": "twitter_api_safe_relay",
+        "rev": "46f446f7b1576f911d04d388bf2dfab92bbffffb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "fa0311",
+        "repo": "twitter_api_safe_relay",
+        "type": "github"
+      }
+    },
+    "twitter-api-safe-relay-mcp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784689643,
+        "narHash": "sha256-NJkdcuV8u4+lPwDCgoavCs94hWNNmemvuCPMKyoAgLc=",
+        "owner": "nakasyou",
+        "repo": "twitter_api_safe_relay_mcp",
+        "rev": "331261abf1345e9dbff6e4078195b9589659b080",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nakasyou",
+        "repo": "twitter_api_safe_relay_mcp",
         "type": "github"
       }
     }
