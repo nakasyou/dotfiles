@@ -30,16 +30,20 @@ in
       };
       health.listen_addr = "127.0.0.1:18790";
       admin_ui.open_browser = false;
-      mcp.commands = [
-        {
-          channel = "main";
-          command = "${package}/bin/local-mcp";
-        }
-      ];
+      mcp = {
+        connection_max_ttl = "8760h";
+        commands = [
+          {
+            channel = "main";
+            command = "${package}/bin/local-mcp";
+          }
+        ];
+      };
     };
     serviceConfig = {
       ProtectHome = false;
       ProtectSystem = false;
+      Restart = "always";
     };
   };
 
