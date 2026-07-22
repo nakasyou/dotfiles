@@ -35,7 +35,7 @@ in
         commands = [
           {
             channel = "main";
-            command = "${package}/bin/local-mcp";
+            command = "${package}/bin/local-mcp mcp";
           }
         ];
       };
