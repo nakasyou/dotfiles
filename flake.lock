@@ -97,6 +97,27 @@
         "type": "github"
       }
     },
+    "local-mcp": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784765291,
+        "narHash": "sha256-FhXWdDOHoZWorvlF+lk8+i7KLcLwV6L65TIu7SBUMz4=",
+        "owner": "nakasyou",
+        "repo": "local-mcp",
+        "rev": "32047b7cdf4e5ee3bb735db1896c70f12765e606",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nakasyou",
+        "ref": "agent/sandbox-permissions",
+        "repo": "local-mcp",
+        "type": "github"
+      }
+    },
     "moonbit-overlay": {
       "inputs": {
         "nixpkgs": "nixpkgs_2",
@@ -246,6 +267,7 @@
       "inputs": {
         "home-manager": "home-manager",
         "llm-agents": "llm-agents",
+        "local-mcp": "local-mcp",
         "moonbit-overlay": "moonbit-overlay",
         "nix-darwin": "nix-darwin",
         "nix-vite-plus": "nix-vite-plus",
