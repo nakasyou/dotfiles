@@ -11,6 +11,7 @@
     ../../modules/nixos/docker.nix
     ../../modules/nixos/nix-ld.nix
     ../../modules/nixos/tailscale.nix
+    ../../modules/nixos/local-mcp-tunnel.nix
     ../../modules/nixos/hardware/amd-rocm.nix
     ../../modules/nixos/hardware/thinkpad-p14s.nix
     ../../modules/nixos/steam.nix

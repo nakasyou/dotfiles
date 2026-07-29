@@ -19,6 +19,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.nix-darwin.follows = "nix-darwin";
     };
+    local-mcp = {
+      url = "github:nakasyou/local-mcp";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     twitter-api-safe-relay = {
       url = "github:fa0311/twitter_api_safe_relay";
       flake = false;
@@ -39,7 +43,7 @@
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
-            inherit hostname username;
+            inherit hostname inputs username;
           };
           modules = modules ++ [
             home-manager.nixosModules.home-manager
@@ -51,6 +55,9 @@
               ];
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
+              home-manager.extraSpecialArgs = {
+                inherit inputs;
+              };
               home-manager.users.${username} = import ./users/nakasyou/home.nix;
             }
           ];
