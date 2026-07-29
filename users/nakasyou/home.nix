@@ -1,6 +1,7 @@
-{ config, lib, pkgs, ... }:
+{ config, inputs, lib, pkgs, ... }:
 
 let
+  llmAgentsPackages = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
   androidSdkRoot = "${androidSdk}/libexec/android-sdk";
   javaHome = "${pkgs.jdk17_headless}/lib/openjdk";
   flameshotGui = pkgs.writeShellScriptBin "flameshot-gui" ''
@@ -295,12 +296,12 @@ in
     rust-analyzer
     clippy
     rustfmt
+    lean4
     typst
     yt-dlp-nightly
     uv
     discord
     prismlauncher
-    nextcloud-client
     zed-editor
     ghostty
     fuzzel
@@ -332,6 +333,7 @@ in
     codexStandalone
     codexDesktopInstall
     codexDesktopUpdate
+    llmAgentsPackages.opencode
     (llm-agents.grok.overrideAttrs (_: {
       # grok's version check invokes bubblewrap, which GitHub-hosted Linux
       # runners cannot use because unprivileged UID maps are disabled.

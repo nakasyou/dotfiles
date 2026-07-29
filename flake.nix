@@ -20,7 +20,7 @@
       inputs.nix-darwin.follows = "nix-darwin";
     };
     local-mcp = {
-      url = "github:nakasyou/local-mcp?ref=agent/sandbox-permissions";
+      url = "github:nakasyou/local-mcp";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     twitter-api-safe-relay = {
@@ -55,6 +55,9 @@
               ];
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
+              home-manager.extraSpecialArgs = {
+                inherit inputs;
+              };
               home-manager.users.${username} = import ./users/nakasyou/home.nix;
             }
           ];

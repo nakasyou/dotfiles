@@ -42,9 +42,11 @@
     auto-optimise-store = true;
     extra-substituters = [
       "https://cache.nakasyou.how"
+      "https://cache.numtide.com"
     ];
     extra-trusted-public-keys = [
       "cache.nakasyou.how-1:BumjaqVgJE6uAuaJcoV1oeFKPEyPxZ73XNmxVskqQZM="
+      "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
     ];
   };
   nix.nixPath = [
