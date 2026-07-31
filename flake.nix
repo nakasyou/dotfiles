@@ -7,6 +7,7 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux";
     nix-darwin = {
       url = "github:LnL7/nix-darwin/nix-darwin-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
