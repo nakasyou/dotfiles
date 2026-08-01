@@ -6,6 +6,7 @@
     ../../modules/nixos/boot-systemd.nix
     ../../modules/nixos/networking.nix
     ../../modules/nixos/desktop-gnome.nix
+    ../../modules/nixos/desktop-niri.nix
     ../../modules/nixos/input-ja-hazkey.nix
     ../../modules/nixos/audio.nix
     ../../modules/nixos/docker.nix
