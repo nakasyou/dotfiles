@@ -65,21 +65,6 @@ jobs:
             extra-substituters = https://cache.nakasyou.how
             extra-trusted-public-keys = cache.nakasyou.how-1:BumjaqVgJE6uAuaJcoV1oeFKPEyPxZ73XNmxVskqQZM=
 
-      - name: Cache Nix store paths
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.temp }}/nix-actions-cache
-          key: nix-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.lock') }}
-          restore-keys: |
-            nix-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Restore Nix store paths
-        run: |
-          cache_dir="$RUNNER_TEMP/nix-actions-cache"
-          if [[ -f "$cache_dir/nix-cache-info" ]]; then
-            nix copy --all --from "file://$cache_dir"
-          fi
-
       - name: Show flake outputs
         run: nix flake show
 
@@ -102,13 +87,6 @@ jobs:
             done
             nix path-info "$target" >> "$RUNNER_TEMP/nix-cache-roots"
           done
-
-      - name: Update Nix store cache
-        run: |
-          cache_dir="$RUNNER_TEMP/nix-actions-cache"
-          while IFS= read -r result; do
-            nix copy --to "file://$cache_dir" "$result"
-          done < "$RUNNER_TEMP/nix-cache-roots"
 
       - name: Publish signed cache objects
         if: github.event_name != 'pull_request'
