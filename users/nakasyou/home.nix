@@ -2,6 +2,7 @@
 
 let
   llmAgentsPackages = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
+  t3codeLatest = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.t3code;
   androidSdkRoot = "${androidSdk}/libexec/android-sdk";
   javaHome = "${pkgs.jdk17_headless}/lib/openjdk";
   flameshotGui = pkgs.writeShellScriptBin "flameshot-gui" ''
@@ -88,12 +89,6 @@ let
   codexStandalone = pkgs.writeShellScriptBin "codex" ''
     exec "${codexStandalonePath}" "$@"
   '';
-  codexDesktopInstall = pkgs.writeShellScriptBin "codex-desktop-install" ''
-    exec nix profile add github:ilysenko/codex-desktop-linux#codex-desktop "$@"
-  '';
-  codexDesktopUpdate = pkgs.writeShellScriptBin "codex-desktop-update" ''
-    exec nix profile upgrade codex-desktop "$@"
-  '';
   codexInstallerPath = lib.makeBinPath (with pkgs; [
     coreutils
     curl
@@ -164,6 +159,8 @@ let
   };
 in
 {
+  imports = [ inputs.codex-desktop-linux.homeManagerModules.default ];
+
   home.username = "nakasyou";
   home.homeDirectory = "/home/nakasyou";
   home.stateVersion = "25.11";
@@ -182,6 +179,10 @@ in
   ];
 
   programs.home-manager.enable = true;
+  programs.codexDesktopLinux = {
+    enable = true;
+    linuxFeatures = [ "shallow-repository-watches" ];
+  };
   services.flameshot = {
     enable = true;
   };
@@ -274,6 +275,7 @@ in
     inkscape
     obsidian
     lmstudio
+    t3codeLatest
     git
     gh
     gnupg
@@ -331,8 +333,6 @@ in
     turbowarp-desktop
     vastai
     codexStandalone
-    codexDesktopInstall
-    codexDesktopUpdate
     llmAgentsPackages.opencode
     (llm-agents.grok.overrideAttrs (_: {
       # grok's version check invokes bubblewrap, which GitHub-hosted Linux
