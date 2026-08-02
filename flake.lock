@@ -63,11 +63,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1785505601,
-        "narHash": "sha256-x7eHYlwF4WRKhaOwI5rhW7dNe+E0DTJTdWZBhhncG5Y=",
+        "lastModified": 1785621037,
+        "narHash": "sha256-9T3/l1/PrfpayWhXAAZNfxTfZ1gcgiYZ1Q2Q34iNkb4=",
         "owner": "ilysenko",
         "repo": "codex-desktop-linux",
-        "rev": "dec2ddb1d628bb8741c90510c30de9f224ad15d5",
+        "rev": "c4581195c2bfec50a271f59146f680b9a0ebdd03",
         "type": "github"
       },
       "original": {
@@ -355,7 +355,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_5": {
+    "nixpkgs_6": {
       "locked": {
         "lastModified": 1781577229,
         "narHash": "sha256-lrp67w8AulE9Ks53n27I45ADSzbOCn4H+CNW1Ck8B+8=",
@@ -413,7 +413,7 @@
     },
     "shojiwm": {
       "inputs": {
-        "nixpkgs": "nixpkgs_5"
+        "nixpkgs": "nixpkgs_6"
       },
       "locked": {
         "lastModified": 1785586809,
