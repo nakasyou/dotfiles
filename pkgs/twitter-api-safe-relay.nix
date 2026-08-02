@@ -31,13 +31,6 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
 
-  postPatch = ''
-    substituteInPlace packages/server/src/server.ts \
-      --replace-fail \
-        'serve({ fetch: app.fetch, port: settings.port });' \
-        'serve({ fetch: app.fetch, port: settings.port, hostname: "127.0.0.1" });'
-  '';
-
   buildPhase = ''
     runHook preBuild
     pnpm --filter twitter-api-safe-relay build

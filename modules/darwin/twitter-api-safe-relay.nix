@@ -9,6 +9,7 @@ let
     src = inputs.twitter-api-safe-relay;
   };
   settings = (pkgs.formats.json { }).generate "twitter-api-safe-relay-settings.json" {
+    hostname = "127.0.0.1";
     port = 3010;
     logLevel = "info";
     profiles = [{
