@@ -19,6 +19,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.nix-darwin.follows = "nix-darwin";
     };
+    shojiwm.url = "github:bea4dev/ShojiWM";
     local-mcp = {
       url = "github:nakasyou/local-mcp";
       inputs.nixpkgs.follows = "nixpkgs";

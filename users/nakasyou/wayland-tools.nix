@@ -2,103 +2,6 @@
 
 {
   xdg.configFile = {
-    "niri/config.kdl".text = ''
-      input {
-        keyboard {
-          xkb {
-            layout "us"
-          }
-          repeat-delay 250
-          repeat-rate 35
-        }
-
-        touchpad {
-          tap
-          natural-scroll
-          dwt
-        }
-
-        focus-follows-mouse max-scroll-amount="0%"
-      }
-
-      output "eDP-1" {
-        scale 1.0
-      }
-
-      layout {
-        gaps 12
-        center-focused-column "never"
-
-        preset-column-widths {
-          proportion 0.33333
-          proportion 0.5
-          proportion 0.66667
-        }
-
-        default-column-width { proportion 0.5; }
-
-        focus-ring {
-          width 2
-          active-color "#7aa2f7"
-          inactive-color "#3b4261"
-        }
-
-        border { off; }
-      }
-
-      spawn-at-startup "waybar"
-      spawn-at-startup "mako"
-      spawn-at-startup "nm-applet" "--indicator"
-
-      prefer-no-csd
-      screenshot-path "~/Pictures/Screenshots/%Y-%m-%d_%H-%M-%S.png"
-      hotkey-overlay { skip-at-startup; }
-
-      binds {
-        Mod+Return { spawn "ghostty"; }
-        Mod+D { spawn "fuzzel"; }
-        Mod+Shift+E { quit; }
-        Mod+Shift+Slash { show-hotkey-overlay; }
-
-        Mod+Q { close-window; }
-        Mod+H { focus-column-left; }
-        Mod+J { focus-window-down; }
-        Mod+K { focus-window-up; }
-        Mod+L { focus-column-right; }
-        Mod+Shift+H { move-column-left; }
-        Mod+Shift+J { move-window-down; }
-        Mod+Shift+K { move-window-up; }
-        Mod+Shift+L { move-column-right; }
-
-        Mod+1 { focus-workspace 1; }
-        Mod+2 { focus-workspace 2; }
-        Mod+3 { focus-workspace 3; }
-        Mod+4 { focus-workspace 4; }
-        Mod+5 { focus-workspace 5; }
-        Mod+Shift+1 { move-column-to-workspace 1; }
-        Mod+Shift+2 { move-column-to-workspace 2; }
-        Mod+Shift+3 { move-column-to-workspace 3; }
-        Mod+Shift+4 { move-column-to-workspace 4; }
-        Mod+Shift+5 { move-column-to-workspace 5; }
-
-        Mod+F { maximize-column; }
-        Mod+Shift+F { fullscreen-window; }
-        Mod+C { center-column; }
-        Mod+R { switch-preset-column-width; }
-
-        Print { screenshot; }
-        Ctrl+Print { screenshot-screen; }
-        Alt+Print { screenshot-window; }
-
-        XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+"; }
-        XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; }
-        XF86AudioMute allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
-        XF86AudioMicMute allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
-        XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "set" "+10%"; }
-        XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "10%-"; }
-      }
-    '';
-
     "fuzzel/fuzzel.ini".text = ''
       [main]
       font=Noto Sans CJK JP:size=13
@@ -151,16 +54,15 @@
       position = "top";
       height = 34;
       spacing = 6;
-      modules-left = [ "niri/workspaces" "niri/window" ];
+      modules-left = [ "wlr/taskbar" ];
       modules-center = [ "clock" ];
       modules-right = [ "tray" "network" "pulseaudio" "battery" ];
-      "niri/workspaces" = {
-        format = "{value}";
+      "wlr/taskbar" = {
+        format = "{icon}";
+        icon-size = 18;
         on-click = "activate";
-      };
-      "niri/window" = {
-        format = "{title}";
-        max-length = 60;
+        on-click-middle = "close";
+        tooltip-format = "{title}";
       };
       clock = {
         format = "{:%m/%d %H:%M}";
