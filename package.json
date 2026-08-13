@@ -1,9 +1,10 @@
 {
   "name": "dotfiles",
-  "type": "module",
   "private": true,
+  "type": "module",
   "devDependencies": {
     "@types/bun": "latest",
+    "vite-plus": "^0.2.7",
     "wrangler": "^4.110.0"
   },
   "peerDependencies": {

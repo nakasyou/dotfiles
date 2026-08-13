@@ -2,7 +2,7 @@ name: Update flake.lock
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 permissions:
@@ -63,8 +63,8 @@ jobs:
           delete-branch: true
           author: actions-user <actions-user@users.noreply.github.com>
           committer: actions-user <actions-user@users.noreply.github.com>
-          commit-message: "flake.lock: update inputs"
-          title: "flake.lock: update inputs"
+          commit-message: 'flake.lock: update inputs'
+          title: 'flake.lock: update inputs'
           body: |
             Automated update of the flake inputs.
 

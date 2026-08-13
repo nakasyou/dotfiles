@@ -1,6 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
+
 This repository manages NixOS and nix-darwin hosts plus the Home Manager profile for `nakasyou`.
 
 - `flake.nix`: main entry point; exposes `nixosConfigurations.p14s` and `darwinConfigurations.mac-mini`.
@@ -12,6 +13,7 @@ This repository manages NixOS and nix-darwin hosts plus the Home Manager profile
 - `gnome/`: static desktop assets such as `gnome/monitors.xml`.
 
 ## Build, Test, and Development Commands
+
 Run commands from the repository root.
 
 - `nix flake show`: verify the flake evaluates and exposes the expected outputs.
@@ -23,6 +25,7 @@ Run commands from the repository root.
 - `nix-instantiate --eval pkgs/turbowarp-desktop.nix`: quick syntax check for a custom package file.
 
 ## Coding Style & Naming Conventions
+
 Use standard Nix formatting: two-space indentation, trailing semicolons, and compact attribute sets. Keep modules declarative and group related options together.
 
 - Prefer lowercase file names with hyphens, e.g. `input-ja-hazkey.nix`.
@@ -31,6 +34,7 @@ Use standard Nix formatting: two-space indentation, trailing semicolons, and com
 - Keep host files thin; put reusable behavior in `modules/nixos/` and host-specific hardware behavior in `modules/nixos/hardware/`.
 
 ## Testing Guidelines
+
 There is no dedicated test suite in this checkout. Treat evaluation and builds as the validation path.
 
 - After structural changes, run `nix flake show`.
@@ -39,6 +43,7 @@ There is no dedicated test suite in this checkout. Treat evaluation and builds a
 - For desktop or service changes, confirm the affected app, service, or setting works after `nixos-rebuild switch`.
 
 ## Commit & Pull Request Guidelines
+
 Git history may be sparse in this workspace snapshot, so follow conservative defaults.
 
 - Write commit subjects in imperative mood, e.g. `nixos: tune TrackPoint sensitivity`.
@@ -46,12 +51,15 @@ Git history may be sparse in this workspace snapshot, so follow conservative def
 - PRs should explain intent, affected files, rollback risk, and include screenshots when changing GNOME, MIME, or desktop behavior.
 
 ## Configuration Notes
+
 Avoid editing generated files casually. `hosts/*/hardware-configuration.nix` should usually change only after hardware reprobe, while user-specific paths and host names should stay consistent with `flake.nix` and `users/nakasyou/home.nix`.
 
 ## Local Service and Cloudflare Notes
+
 Local Docker services live under `services/<name>/` in the repository and are copied to `~/services/<name>/` by the mac-mini nix-darwin activation script. Commit `compose.yml` and non-secret examples such as `env.example`; never commit real `.env` files or credentials.
 
 When adding a service exposed through Cloudflare Tunnel:
+
 - Add the service compose file under `services/<name>/`.
 - Add the launchd/docker-compose management in `modules/darwin/local-services.nix`.
 - Add the ingress hostname to `services/cloudflared/config.yml`, pointing to the localhost port.

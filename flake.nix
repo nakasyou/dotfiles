@@ -22,6 +22,7 @@
       inputs.nix-darwin.follows = "nix-darwin";
     };
     shojiwm.url = "github:bea4dev/ShojiWM";
+    dms.url = "github:AvengeMedia/DankMaterialShell";
     local-mcp = {
       url = "github:nakasyou/local-mcp";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -50,6 +51,7 @@
           };
           modules = modules ++ [
             home-manager.nixosModules.home-manager
+            inputs.codex-desktop-linux.nixosModules.default
             {
               nixpkgs.overlays = [
                 moonbit-overlay.overlays.default
@@ -62,6 +64,14 @@
                 inherit inputs;
               };
               home-manager.users.${username} = import ./users/nakasyou/home.nix;
+
+              programs.codexDesktopLinux = {
+                enable = true;
+                linuxFeatures = [
+                  "codex-micro"
+                  "shallow-repository-watches"
+                ];
+              };
             }
           ];
         };

@@ -1,0 +1,336 @@
+window.DesktopBackground {
+  background: #000000;
+}
+
+window.DesktopBackground picture {
+  background: #000000;
+}
+
+window.Bar {
+  background: transparent;
+  color: #1d1b20;
+  font-family: "Urbanist", "Noto Sans CJK JP", sans-serif;
+  font-size: 12px;
+}
+
+.bar-content {
+  min-height: 32px;
+  padding: 0 13px;
+  background: rgba(234, 221, 255, 0.2);
+  border-radius: 16px;
+}
+
+.status-cluster {
+  min-height: 24px;
+}
+
+.status-icons {
+  min-height: 24px;
+}
+
+.system-tray,
+.system-indicators {
+  min-height: 24px;
+}
+
+.system-indicators-button,
+.system-indicators-button > button {
+  min-height: 24px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.status-icon {
+  color: #1d1b20;
+  min-width: 20px;
+  min-height: 20px;
+}
+
+.tray-item,
+.tray-item > button {
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.volume-icon {
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.clock {
+  color: #000000;
+  font-weight: 700;
+}
+
+window.ControlCenterWindow {
+  background: transparent;
+  color: #1c3338;
+}
+
+.control-center-layout {
+  background: transparent;
+}
+
+.control-center-dismiss-area {
+  background: rgba(0, 0, 0, 0.001);
+}
+
+window.NotificationPopupWindow {
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.notification-popup-list {
+  min-width: 380px;
+  padding: 2px;
+  background: transparent;
+}
+
+.notification-card {
+  min-width: 344px;
+  padding: 16px 18px;
+  border: 1px solid rgba(73, 93, 97, 0.16);
+  border-radius: 20px;
+  outline: none;
+  background: rgba(227, 240, 242, 0.98);
+  color: #1c3338;
+}
+
+.notification-card.popup {
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.34),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.notification-card.compact {
+  padding: 14px 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.notification-header {
+  min-height: 34px;
+  color: #1c3338;
+}
+
+.notification-app-icon {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #9dd8df;
+  color: #00363d;
+}
+
+.notification-app-name,
+.notification-summary {
+  font-weight: 700;
+}
+
+.notification-app-name {
+  font-size: 14px;
+  color: #1c3338;
+}
+
+.notification-time {
+  color: #52676b;
+  font-size: 12px;
+}
+
+.notification-summary {
+  font-size: 16px;
+  color: #1c3338;
+}
+
+.notification-body {
+  color: #52676b;
+  font-size: 14px;
+  line-height: 1.42;
+}
+
+.notification-action,
+.notification-action > button,
+.notification-clear,
+.notification-clear > button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 18px;
+  background: transparent;
+  color: #056b73;
+  outline: none;
+  box-shadow: none;
+  font-weight: 700;
+}
+
+.notification-action:focus,
+.notification-action:focus-visible,
+.notification-action > button:focus,
+.notification-action > button:focus-visible,
+.notification-clear:focus,
+.notification-clear:focus-visible,
+.notification-clear > button:focus,
+.notification-clear > button:focus-visible {
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.notification-action:hover,
+.notification-action > button:hover {
+  background: rgba(5, 107, 115, 0.1);
+}
+
+.notification-action.primary,
+.notification-action.primary > button {
+  background: #056b73;
+  color: #f2ffff;
+}
+
+.notification-history {
+  min-width: 332px;
+  background: transparent;
+  color: #1c3338;
+}
+
+.notification-history-scroll {
+  background: transparent;
+}
+
+.notification-clear-floating,
+.notification-clear-floating > button {
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 20px;
+  background: #056b73;
+  color: #f2ffff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+.notification-clear-floating:hover,
+.notification-clear-floating > button:hover {
+  background: #075f66;
+}
+
+.notification-empty {
+  padding: 22px 12px;
+  color: #52676b;
+}
+
+.control-center {
+  min-width: 324px;
+  padding: 18px;
+  border-radius: 28px;
+  background: rgba(227, 240, 242, 0.98);
+  color: #1c3338;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+}
+
+.control-slider-row {
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 26px;
+  background: #056b73;
+  color: #f2ffff;
+}
+
+.control-slider-row scale {
+  min-width: 254px;
+}
+
+.control-slider-row scale trough {
+  min-height: 10px;
+  border-radius: 999px;
+  background: #abcdd1;
+}
+
+.control-slider-row scale highlight {
+  min-height: 10px;
+  border-radius: 999px;
+  background: #f2ffff;
+}
+
+.control-slider-row scale slider {
+  min-width: 18px;
+  min-height: 18px;
+  border-radius: 999px;
+  background: #f2ffff;
+  box-shadow: none;
+}
+
+.control-tile {
+  min-height: 64px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 36px;
+  background: #c7e1e5;
+  color: #1c3338;
+  box-shadow: none;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.control-tile:hover {
+  background: #b8d7dc;
+}
+
+.control-tile.active {
+  background: #056b73;
+  color: #f2ffff;
+}
+
+.wifi-details-button {
+  min-width: 64px;
+  min-height: 64px;
+  padding: 0;
+  border: none;
+  border-radius: 32px;
+  background: #c7e1e5;
+  color: #1c3338;
+  box-shadow: none;
+}
+
+.wifi-network-list {
+  padding: 6px;
+  border-radius: 24px;
+  background: rgba(199, 225, 229, 0.72);
+}
+
+.wifi-network,
+.wifi-settings {
+  min-height: 42px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 21px;
+  background: transparent;
+  color: #1c3338;
+  box-shadow: none;
+}
+
+.wifi-network:hover,
+.wifi-settings:hover {
+  background: rgba(5, 107, 115, 0.12);
+}
+
+.wifi-settings {
+  font-weight: 700;
+}
+
+.power-profile-control.performance {
+  background: #8c4a00;
+  color: #fff4e8;
+}
+
+.power-profile-control.power-saver {
+  background: #386a20;
+  color: #f4ffe9;
+}

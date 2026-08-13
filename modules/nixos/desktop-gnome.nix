@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   services.xserver.enable = true;
@@ -28,16 +28,6 @@
       obs-vkcapture
     ];
   };
-
-  environment.etc."xdg/autostart/easyeffects.desktop".source =
-    "${pkgs.makeDesktopItem {
-      name = "easyeffects";
-      desktopName = "Easy Effects";
-      exec = "${lib.getExe pkgs.easyeffects} --gapplication-service";
-      terminal = false;
-      categories = [ "AudioVideo" "Audio" ];
-      startupNotify = false;
-    }}/share/applications/easyeffects.desktop";
 
   fonts = {
     packages = with pkgs; [

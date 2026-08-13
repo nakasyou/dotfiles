@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "jsxImportSource": "astal/gtk4",
+    "strict": true,
+    "noEmit": true,
+    "paths": {
+      "astal": [
+        "/nix/store/5hmr4sd2lc5zlir7p63rplzk5phr73bq-astal-gjs-0-unstable-2025-11-26/share/astal/gjs/index.ts"
+      ],
+      "astal/*": [
+        "/nix/store/5hmr4sd2lc5zlir7p63rplzk5phr73bq-astal-gjs-0-unstable-2025-11-26/share/astal/gjs/*"
+      ]
+    },
+    "skipLibCheck": true
+  },
+  "include": [
+    "app.tsx",
+    "env.d.ts",
+    "@girs/**/*.d.ts"
+  ]
+}

@@ -211,6 +211,7 @@ in
 {
   environment.systemPackages = with pkgs; [
     cargo
+    duckdb
     nodejs_22
     rustc
     cloudflared

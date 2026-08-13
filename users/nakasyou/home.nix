@@ -2,7 +2,37 @@
 
 let
   llmAgentsPackages = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
-  t3codeLatest = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.t3code;
+  unstablePkgs = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+  t3codeLatest = unstablePkgs.t3code;
+  protonVpnApiCore = unstablePkgs.python3Packages.proton-vpn-api-core.overrideAttrs (oldAttrs: {
+    postPatch = oldAttrs.postPatch + ''
+      cat >> proton/vpn/connection/exceptions.py <<'EOF'
+
+      class NotYetValidCertificateError(VPNConnectionError):
+          """Signals that the certificate validity starts in the future."""
+      EOF
+    '';
+  });
+  protonVpn = unstablePkgs.proton-vpn.overrideAttrs (oldAttrs: {
+    version = "4.17.1";
+    src = pkgs.fetchFromGitHub {
+      owner = "ProtonVPN";
+      repo = "proton-vpn-gtk-app";
+      tag = "v4.17.1";
+      hash = "sha256-8TAiGvl7Myw69dBZetRxdoK9BA86DTE5JXwMWxYcd88=";
+    };
+    propagatedBuildInputs = map
+      (dependency:
+        if (dependency.pname or "") == "proton-vpn-api-core" then
+          protonVpnApiCore
+        else
+          dependency)
+      oldAttrs.propagatedBuildInputs;
+    disabledTestPaths = oldAttrs.disabledTestPaths ++ [
+      # GTK demo rendering requires a display and segfaults in the Nix sandbox.
+      "tests/unit/demo"
+    ];
+  });
   androidSdkRoot = "${androidSdk}/libexec/android-sdk";
   javaHome = "${pkgs.jdk17_headless}/lib/openjdk";
   flameshotGui = pkgs.writeShellScriptBin "flameshot-gui" ''
@@ -169,10 +199,12 @@ in
     ANDROID_SDK_ROOT = androidSdkRoot;
     DOTFILES_DIR = "${config.home.homeDirectory}/dotfiles";
     JAVA_HOME = javaHome;
+    NIXOS_OZONE_WL = "1";
     PKG_CONFIG_PATH = lib.makeSearchPathOutput "dev" "lib/pkgconfig" gtk4PkgConfigPackages;
     CODEX_CLI_PATH = codexStandalonePath;
   };
   home.sessionPath = [
+    "${config.home.homeDirectory}/.local/bin"
     "${javaHome}/bin"
     "${androidSdkRoot}/emulator"
     "${androidSdkRoot}/platform-tools"
@@ -181,7 +213,10 @@ in
   programs.home-manager.enable = true;
   programs.codexDesktopLinux = {
     enable = true;
-    linuxFeatures = [ "shallow-repository-watches" ];
+    linuxFeatures = [
+      "codex-micro"
+      "shallow-repository-watches"
+    ];
   };
   services.flameshot = {
     enable = true;
@@ -192,6 +227,30 @@ in
     --enable-wayland-ime
   '';
   xdg.configFile."codex-desktop/electron-flags.conf".force = true;
+  xdg.configFile."brave-flags.conf" = {
+    text = ''
+      --ozone-platform=wayland
+      --enable-features=WaylandWindowDecorations
+      --enable-wayland-ime
+    '';
+    force = true;
+  };
+  xdg.configFile."code-flags.conf" = {
+    text = ''
+      --ozone-platform=wayland
+      --enable-features=WaylandWindowDecorations
+      --enable-wayland-ime
+    '';
+    force = true;
+  };
+  xdg.configFile."shojiwm" = {
+    source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/config/shojiwm";
+    force = true;
+  };
+  xdg.configFile."shoji-bar-2" = {
+    source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/config/shoji-bar-2";
+    force = true;
+  };
   xdg.configFile."mimeapps.list".force = true;
   xdg.dataFile."applications/mimeapps.list".force = true;
   home.file.".profile".text = ''
@@ -214,6 +273,10 @@ in
     text = ''
       if [ -d "$HOME/.nix-profile/bin" ]; then
         export PATH="$HOME/.nix-profile/bin:$PATH"
+      fi
+
+      if [ -d "$HOME/.local/bin" ]; then
+        export PATH="$HOME/.local/bin:$PATH"
       fi
 
       for hm_session_vars in \
@@ -254,6 +317,16 @@ in
         ${pkgs.bash}/bin/bash "$tmp_dir/install.sh"
     fi
   '';
+  home.activation.installGoogleColabCli = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    colab_bin="${config.home.homeDirectory}/.local/bin/colab"
+
+    if [ ! -x "$colab_bin" ]; then
+      echo "Installing Google Colab CLI"
+      env \
+        UV_TOOL_BIN_DIR="${config.home.homeDirectory}/.local/bin" \
+        ${pkgs.uv}/bin/uv tool install google-colab-cli
+    fi
+  '';
   home.packages = with pkgs; [
     androidStudio
     androidSdk
@@ -269,6 +342,8 @@ in
     google-chrome
     vscode
     libreoffice
+    blender
+    bambu-studio
     gimp
     gpick
     imagemagick
@@ -281,6 +356,8 @@ in
     gnupg
     google-cloud-sdk
     google-cloud-sql-proxy
+    cloudflared
+    duckdb
     rclone
     wrangler
     ffmpeg
@@ -288,6 +365,7 @@ in
     easyeffects
     kooha
     gnome-sound-recorder
+    vicinae
     nodejs_22
     vite-plus
     bun
@@ -306,6 +384,13 @@ in
     prismlauncher
     zed-editor
     ghostty
+    (ags.override {
+      extraPackages = [
+        astal.notifd
+        astal.tray
+        pkgs.gtk4
+      ];
+    })
     fuzzel
     wofi
     macchanger
@@ -314,13 +399,38 @@ in
     ripgrep
     grim
     slurp
+    (writeShellApplication {
+      name = "shoji-screenshot";
+      runtimeInputs = [ grim libnotify slurp wl-clipboard xdg-user-dirs ];
+      text = ''
+        case "''${1:-region}" in
+          region) ;;
+          *)
+            echo "usage: shoji-screenshot [region]" >&2
+            exit 2
+            ;;
+        esac
+
+        geometry="$(slurp)" || exit 0
+        screenshot_dir="$(xdg-user-dir PICTURES)/Screenshots"
+        mkdir -p "$screenshot_dir"
+        screenshot_path="$screenshot_dir/$(date +'%Y-%m-%d_%H-%M-%S').png"
+
+        grim -g "$geometry" "$screenshot_path"
+        wl-copy --type image/png < "$screenshot_path"
+        notify-send \
+          --icon="$screenshot_path" \
+          "Screenshot saved" \
+          "$screenshot_path"
+      '';
+    })
     swaybg
     waybar
     wlogout
     networkmanagerapplet
     celluloid
     mpvpaper
-    proton-vpn
+    protonVpn
     zip
     brave
     gpaste
@@ -360,6 +470,19 @@ in
       r2pipe
     ]))
   ];
+
+  dconf.settings = {
+    "org/gnome/settings-daemon/plugins/media-keys" = {
+      custom-keybindings = [
+        "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vicinae/"
+      ];
+    };
+    "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vicinae" = {
+      name = "Open Vicinae";
+      binding = "<Super>a";
+      command = "${lib.getExe pkgs.vicinae} open";
+    };
+  };
 
   xdg.mimeApps = {
     enable = true;

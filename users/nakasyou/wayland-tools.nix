@@ -29,24 +29,70 @@
       radius=10
     '';
 
-    "mako/config".text = ''
-      font=Noto Sans CJK JP 11
-      background-color=#1a1b26ee
-      text-color=#c0caf5
-      border-color=#7aa2f7
-      border-size=2
-      border-radius=10
-      width=360
-      height=120
-      margin=12
-      padding=14
-      default-timeout=6000
-      icons=1
-      max-icon-size=48
+    "wofi/config".text = ''
+      show=drun
+      width=720
+      height=480
+      columns=4
+      lines=3
+      allow_images=true
+      image_size=48
+      insensitive=true
+      prompt=アプリを検索
+      hide_scroll=true
+      no_actions=true
+    '';
 
-      [urgency=high]
-      border-color=#f7768e
-      default-timeout=0
+    "wofi/style.css".text = ''
+      * {
+        font-family: "Noto Sans CJK JP", sans-serif;
+        font-size: 13px;
+      }
+
+      window {
+        margin: 0;
+        padding: 18px;
+        border: 2px solid #7aa2f7;
+        border-radius: 16px;
+        background-color: rgba(26, 27, 38, 0.97);
+      }
+
+      #input {
+        margin: 4px 4px 16px;
+        padding: 12px 16px;
+        border: 1px solid #414868;
+        border-radius: 10px;
+        color: #c0caf5;
+        background-color: #24283b;
+      }
+
+      #inner-box {
+        margin: 0;
+      }
+
+      #entry {
+        min-width: 140px;
+        min-height: 104px;
+        margin: 6px;
+        padding: 14px 10px;
+        border-radius: 12px;
+        color: #c0caf5;
+        background-color: #24283b;
+      }
+
+      #entry:selected {
+        color: #ffffff;
+        background-color: #33467c;
+        outline: 2px solid #7aa2f7;
+      }
+
+      #img {
+        margin: 0 10px 0 0;
+      }
+
+      #text {
+        color: inherit;
+      }
     '';
 
     "waybar/config".text = builtins.toJSON {
@@ -141,7 +187,6 @@
   };
 
   home.packages = with pkgs; [
-    mako
     nerd-fonts.symbols-only
   ];
 }

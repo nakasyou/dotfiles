@@ -9,6 +9,6 @@
   // --route cache.nakasyou.how/*`. Keeping the zone ID out of this repository
   // makes the configuration portable.
   "vars": {
-    "GITHUB_REPOSITORY": "nakasyou/dotfiles"
-  }
+    "GITHUB_REPOSITORY": "nakasyou/dotfiles",
+  },
 }
