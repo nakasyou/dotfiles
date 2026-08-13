@@ -4,6 +4,7 @@
   nodejs_24,
   runCommand,
   src,
+  stdenv,
 }:
 
 let
@@ -19,7 +20,10 @@ buildNpmPackage {
 
   src = preparedSrc;
   nodejs = nodejs_24;
-  npmDepsHash = "sha256-lWgAM838stZDMLj8LV0O2XkVtAC7WEqbEs+oRJjKJHc=";
+  npmDepsHash = if stdenv.hostPlatform.isDarwin then
+    "sha256-c0Vq+/IwoaPmJJiAoqTfmj6WEOzh+ktTwigkZ/uBC34="
+  else
+    "sha256-lWgAM838stZDMLj8LV0O2XkVtAC7WEqbEs+oRJjKJHc=";
 
   npmBuildScript = "build";
 
