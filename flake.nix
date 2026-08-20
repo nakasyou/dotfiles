@@ -24,7 +24,7 @@
     shojiwm.url = "github:bea4dev/ShojiWM";
     dms.url = "github:AvengeMedia/DankMaterialShell";
     local-mcp = {
-      url = "github:nakasyou/local-mcp";
+      url = "github:nakasyou/local-mcp/826bba94edb1eabc1739ea1f9640f03ee4630081";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     twitter-api-safe-relay = {
