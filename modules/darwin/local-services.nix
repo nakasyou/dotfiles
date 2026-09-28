@@ -64,14 +64,6 @@ let
       sleep 30
     done
 
-    if [ -x ./target/release/notion-fs ]; then
-      exec ./target/release/notion-fs serve
-    fi
-
-    if [ -x ./target/debug/notion-fs ]; then
-      exec ./target/debug/notion-fs serve
-    fi
-
     "${pkgs.cargo}/bin/cargo" build --release
     exec ./target/release/notion-fs serve
   '';
