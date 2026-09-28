@@ -72,6 +72,7 @@
     iproute2
     inetutils
     traceroute
+    nmap
     bind
     ethtool
     wirelesstools
