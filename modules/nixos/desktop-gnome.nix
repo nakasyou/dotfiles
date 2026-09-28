@@ -14,7 +14,10 @@
     ];
   };
 
-  services.printing.enable = true;
+  services.printing = {
+    enable = true;
+    drivers = [ pkgs.cnijfilter2 ];
+  };
 
   programs.firefox.enable = true;
   programs.obs-studio = {

@@ -19,7 +19,7 @@
   users.users.nakasyou = {
     isNormalUser = true;
     description = "Shotaro Nakamura";
-    extraGroups = [ "networkmanager" "wheel" "video" "render" "kvm" "docker" ];
+    extraGroups = [ "networkmanager" "wheel" "video" "render" "kvm" "docker" "dialout" ];
     packages = with pkgs; [ ];
   };
 

@@ -16,6 +16,10 @@
     moonbit-overlay.url = "github:moonbit-community/moonbit-overlay";
     nix-vite-plus.url = "github:ryoppippi/nix-vite-plus";
     llm-agents.url = "github:numtide/llm-agents.nix";
+    devin-cli = {
+      url = "github:broady/nix-devin-cli";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     openai-secure-tunnel-nix = {
       url = "github:nakasyou/openai-secure-tunnel-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -68,8 +72,17 @@
               programs.codexDesktopLinux = {
                 enable = true;
                 linuxFeatures = [
+                  "agent-workspace"
+                  "appshots"
+                  "browser-proxy"
                   "codex-micro"
+                  "computer-use-linux"
+                  "node-repl-reaper"
+                  "record-and-replay"
+                  "remote-control-ui"
+                  "remote-mobile-control"
                   "shallow-repository-watches"
+                  "thorium-chrome-plugin"
                 ];
               };
             }

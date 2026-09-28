@@ -1,0 +1,85 @@
+/* Material 3: flat permanent surfaces, tonal containers and rounded state layers.
+   Scoped to Dolphin by its launcher; Kvantum supplies popup shadows and controls. */
+QMainWindow, QDockWidget, QStatusBar {
+  background-color: #f7f2fa;
+  color: #1d1b20;
+}
+QToolBar {
+  background: #f7f2fa;
+  border: none;
+  spacing: 8px;
+  padding: 8px 12px;
+}
+QToolBar QToolButton {
+  color: #49454f;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 7px;
+}
+QToolBar QToolButton:hover { background: #eae4ee; }
+QToolBar QToolButton:pressed, QToolBar QToolButton:checked {
+  background: #e8def8;
+  color: #4a4458;
+}
+QToolBar QToolButton:focus { border-color: #6750a4; }
+QToolBar QToolButton:disabled { color: #938f99; }
+QToolBar::separator { width: 1px; background: #cac4d0; margin: 12px 4px; }
+KUrlNavigator {
+  background: #ece6f0;
+  border-radius: 24px;
+  padding: 4px 12px;
+}
+QLineEdit {
+  color: #1d1b20;
+  background: #e6e0e9;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  padding: 8px 12px;
+  selection-background-color: #e8def8;
+  selection-color: #1d192b;
+}
+QLineEdit:focus { border-color: #6750a4; }
+KFilePlacesView {
+  background: #f7f2fa;
+  border: none;
+  padding: 8px;
+  min-width: 192px;
+  color: #49454f;
+}
+KFilePlacesView::item {
+  border: none;
+  border-radius: 20px;
+  min-height: 40px;
+  padding: 2px 8px;
+}
+KFilePlacesView::item:selected { background: #e8def8; color: #1d192b; }
+KFilePlacesView::item:hover { background: #eae4ee; }
+KFilePlacesView::item:selected:hover { background: #dfd4ed; }
+QDockWidget::title {
+  background: #f7f2fa;
+  color: #49454f;
+  padding: 12px 16px 4px;
+}
+QStatusBar { border: none; padding: 4px 12px; }
+QStatusBar::item { border: none; }
+QSplitter::handle { background: #f7f2fa; }
+QMenu { color: #1d1b20; }
+QMenu::item { padding: 10px 20px; border-radius: 12px; }
+QMenu::item:selected { background: #e8def8; color: #1d192b; }
+QMenu::separator { height: 1px; background: #cac4d0; margin: 8px 12px; }
+/* File content sits on its own unshadowed surface. */
+KItemListContainer {
+  background: #fef7ff;
+  border: 8px solid #f7f2fa;
+  border-radius: 24px;
+}
+QToolTip {
+  color: #f5eff7;
+  background: #322f35;
+  border: none;
+  border-radius: 4px;
+  padding: 8px;
+}

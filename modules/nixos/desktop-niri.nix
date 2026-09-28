@@ -24,6 +24,11 @@ in
     });
   };
 
+  # Niri's portal does not provide keyboard input for Computer Use.
+  # The NixOS module also exports YDOTOOL_SOCKET for desktop clients.
+  programs.ydotool.enable = true;
+  users.users.${username}.extraGroups = [ "ydotool" ];
+
   home-manager.users.${username} = {
     imports = [
       inputs.dms.homeModules.dank-material-shell
@@ -57,6 +62,11 @@ in
 
       prefer-no-csd
 
+      // Work around PipeWire format negotiation failures in screen recorders.
+      debug {
+        force-pipewire-invalid-modifier
+      }
+
       output "eDP-1" {
         scale 1
       }
@@ -89,7 +99,29 @@ in
         Mod+T { spawn "ghostty"; }
         Mod+E { spawn "dolphin"; }
         Mod+Q { close-window; }
+        Alt+F4 { close-window; }
         Mod+M { spawn "dms" "ipc" "call" "processlist" "toggle"; }
+
+        Mod+F { maximize-column; }
+        Mod+Shift+F { fullscreen-window; }
+        Mod+Shift+M { maximize-window-to-edges; }
+        Mod+Ctrl+F { expand-column-to-available-width; }
+        Mod+C { center-column; }
+
+        Mod+R { switch-preset-column-width; }
+        Mod+Shift+R { switch-preset-column-width-back; }
+        Mod+Ctrl+R { reset-window-height; }
+        // Arrow keys keep resizing accessible on the Japanese keyboard layout.
+        Mod+Alt+Left  { set-column-width "-10%"; }
+        Mod+Alt+Right { set-column-width "+10%"; }
+        Mod+Alt+Up    { set-window-height "-10%"; }
+        Mod+Alt+Down  { set-window-height "+10%"; }
+
+        Mod+Shift+V { toggle-window-floating; }
+        Mod+Ctrl+V { switch-focus-between-floating-and-tiling; }
+        Mod+W { toggle-column-tabbed-display; }
+        Mod+Tab { toggle-overview; }
+        Mod+F1 { show-hotkey-overlay; }
 
         Alt+Tab { focus-window-or-workspace-down; }
         Alt+Shift+Tab { focus-window-or-workspace-up; }
@@ -106,6 +138,11 @@ in
 
         Mod+Ctrl+Up   { focus-workspace-up; }
         Mod+Ctrl+Down { focus-workspace-down; }
+
+        Mod+Ctrl+Shift+Up   { move-window-up; }
+        Mod+Ctrl+Shift+Down { move-window-down; }
+        Mod+Ctrl+Left  { consume-or-expel-window-left; }
+        Mod+Ctrl+Right { consume-or-expel-window-right; }
 
         Mod+Shift+S { screenshot; }
 

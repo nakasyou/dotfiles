@@ -17,6 +17,10 @@ in
 {
   services.fprintd.enable = true;
 
+  # LVFS firmware updates (BIOS/EC). Needed to pick up EC fixes for the
+  # keyboard hang where the EC stops scanning the matrix while a key is held.
+  services.fwupd.enable = true;
+
   hardware.trackpoint = {
     enable = true;
     device = "TPPS/2 Elan TrackPoint";

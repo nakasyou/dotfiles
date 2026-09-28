@@ -2,6 +2,7 @@
 
 let
   llmAgentsPackages = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
+  devinCli = inputs.devin-cli.packages.${pkgs.stdenv.hostPlatform.system}.devin;
   unstablePkgs = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
   t3codeLatest = unstablePkgs.t3code;
   protonVpnApiCore = unstablePkgs.python3Packages.proton-vpn-api-core.overrideAttrs (oldAttrs: {
@@ -85,14 +86,50 @@ let
       "''${@:-@Eclipsa_API35}"
   '';
   turbowarp-desktop = pkgs.callPackage ../../pkgs/turbowarp-desktop.nix { };
+  chatgpt = pkgs.callPackage ../../pkgs/chatgpt.nix { };
+  bambu-studio-appimage = let
+    pname = "bambu-studio";
+    version = "02.08.02.61";
+    src = pkgs.fetchurl {
+      url = "https://github.com/bambulab/BambuStudio/releases/download/v${version}/BambuStudio_ubuntu24.04-v${version}-20260820225108.AppImage";
+      hash = "sha256-1QGxA/rFQkUT7A6Na8FF+zBxneLH2U1zINcjdAyBp/0=";
+    };
+    appimageContents = pkgs.appimageTools.extractType2 { inherit pname version src; };
+  in pkgs.appimageTools.wrapType2 {
+    inherit pname version src;
+    extraPkgs = appimagePkgs: [ appimagePkgs.webkitgtk_4_1 ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    extraInstallCommands = ''
+      install -m 444 -D \
+        ${appimageContents}/BambuStudio.desktop \
+        $out/share/applications/BambuStudio.desktop
+      install -m 444 -D \
+        ${appimageContents}/BambuStudio.png \
+        $out/share/icons/hicolor/192x192/apps/BambuStudio.png
+
+      substituteInPlace $out/share/applications/BambuStudio.desktop \
+        --replace-fail 'Exec=AppRun' 'Exec=bambu-studio'
+
+      wrapProgram $out/bin/bambu-studio \
+        --run 'export XDG_CONFIG_HOME="''${BAMBU_STUDIO_CONFIG_HOME:-$HOME/.config/bambu-studio-appimage}"'
+    '';
+    meta = {
+      description = "Bambu Studio 3D printing slicer (official AppImage)";
+      homepage = "https://github.com/bambulab/BambuStudio";
+      license = lib.licenses.agpl3Only;
+      mainProgram = "bambu-studio";
+      platforms = [ "x86_64-linux" ];
+      sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
+    };
+  };
   # Upstream stable lags behind the current nightly release.
   yt-dlp-nightly = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "yt-dlp";
-    version = "nightly-2026.04.30.234007";
+    version = "nightly-2026.08.20.234504";
 
     src = pkgs.fetchurl {
-      url = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.04.30.234007/yt-dlp_linux";
-      hash = "sha256-AWMW3DpUNVXxDhUhXHe0SAQSc5EoNdnOWToDdpzgwEI=";
+      url = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.08.20.234504/yt-dlp_linux";
+      hash = "sha256-YSy26oB6YRaLDQIKpuHoexjRKasGaIeuQSjtj6BBBxc=";
     };
 
     dontUnpack = true;
@@ -214,19 +251,30 @@ in
   programs.codexDesktopLinux = {
     enable = true;
     linuxFeatures = [
+      "agent-workspace"
+      "appshots"
+      "browser-proxy"
       "codex-micro"
+      "computer-use-linux"
+      "node-repl-reaper"
+      "record-and-replay"
+      "remote-control-ui"
+      "remote-mobile-control"
       "shallow-repository-watches"
+      "thorium-chrome-plugin"
     ];
   };
   services.flameshot = {
     enable = true;
   };
 
-  xdg.configFile."codex-desktop/electron-flags.conf".text = ''
-    --ozone-platform-hint=auto
-    --enable-wayland-ime
-  '';
-  xdg.configFile."codex-desktop/electron-flags.conf".force = true;
+  xdg.configFile."codex-desktop/electron-flags.conf" = {
+    text = ''
+      --ozone-platform-hint=auto
+      --enable-wayland-ime
+    '';
+    force = true;
+  };
   xdg.configFile."brave-flags.conf" = {
     text = ''
       --ozone-platform=wayland
@@ -252,6 +300,14 @@ in
     force = true;
   };
   xdg.configFile."mimeapps.list".force = true;
+  xdg.configFile."monitors.xml" = {
+    source = ../../gnome/monitors.xml;
+    force = true;
+  };
+  xdg.configFile."Kvantum/Katerial_Light_RedPink".source = ../../config/dolphin-material/Katerial_Light_RedPink;
+  xdg.configFile."Kvantum/kvantum.kvconfig".source = ../../config/dolphin-material/kvantum.kvconfig;
+  xdg.configFile."qt6ct/qt6ct.conf".source = ../../config/dolphin-material/qt6ct.conf;
+  xdg.dataFile."color-schemes/Katerial_Light_RedPink.colors".source = ../../config/dolphin-material/Katerial_Light_RedPink.colors;
   xdg.dataFile."applications/mimeapps.list".force = true;
   home.file.".profile".text = ''
     for hm_session_vars in \
@@ -292,8 +348,15 @@ in
       export PATH="$HOME/.npm-global/bin:$PATH"
 
       alias nakasyou-nix-rebuild="sudo nixos-rebuild switch --flake path:/home/nakasyou/dotfiles#p14s"
+      alias nix-update='sudo nixos-rebuild switch --flake ~/dotfiles#p14s'
+      alias rpi-imager='sudo env QT_QPA_PLATFORM=wayland XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" WAYLAND_DISPLAY="$WAYLAND_DISPLAY" ${pkgs.rpi-imager}/bin/rpi-imager'
     '';
   };
+
+  home.activation.configureDolphin = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    ${pkgs.kdePackages.kconfig}/bin/kwriteconfig6 \
+      --file dolphinrc --group General --key BrowseThroughArchives --type bool true
+  '';
 
   home.activation.installCodexStandalone = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     codex_standalone="${codexStandalonePath}"
@@ -328,6 +391,8 @@ in
     fi
   '';
   home.packages = with pkgs; [
+    chatgpt
+    (pkgs.callPackage ../../pkgs/grok-bot.nix { })
     androidStudio
     androidSdk
     android-tools
@@ -342,8 +407,10 @@ in
     google-chrome
     vscode
     libreoffice
+    (pkgs.callPackage ../../pkgs/dolphin-material.nix { })
+    rpi-imager
     blender
-    bambu-studio
+    bambu-studio-appimage
     gimp
     gpick
     imagemagick
@@ -353,6 +420,7 @@ in
     t3codeLatest
     git
     gh
+    jq
     gnupg
     google-cloud-sdk
     google-cloud-sql-proxy
@@ -381,6 +449,8 @@ in
     yt-dlp-nightly
     uv
     discord
+    beeper
+    signal-desktop
     prismlauncher
     zed-editor
     ghostty
@@ -450,6 +520,7 @@ in
       doInstallCheck = false;
     }))
     llm-agents.mimo-code
+    devinCli
     flameshotGui
     tmux
     screen
@@ -487,6 +558,7 @@ in
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
+      "inode/directory" = "org.kde.dolphin.desktop";
       "text/html" = "brave-browser.desktop";
       "x-scheme-handler/http" = "brave-browser.desktop";
       "x-scheme-handler/https" = "brave-browser.desktop";

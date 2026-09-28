@@ -63,11 +63,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1787201206,
-        "narHash": "sha256-/9Kbc3ObfqTmzoL8IHXf+/bRrTPYDrIEh3zrYo136mg=",
+        "lastModified": 1790227061,
+        "narHash": "sha256-DEwJka7kJfNlRZEY2UIogRQgxUe0Iw38JZyDEFHx+Qs=",
         "owner": "ilysenko",
         "repo": "codex-desktop-linux",
-        "rev": "cd8b685c4dd4a9f915febecedb019eba6fad2b50",
+        "rev": "828f2cf0cdb9cf740e3689ff7e8c2650db0524fe",
         "type": "github"
       },
       "original": {
@@ -89,6 +89,26 @@
       "original": {
         "owner": "AvengeMedia",
         "repo": "dank-qml-common",
+        "type": "github"
+      }
+    },
+    "devin-cli": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789626461,
+        "narHash": "sha256-wN4feE28DxANDaDtnxCGcYg16zWVPmDjit8nLwF+5Vs=",
+        "owner": "broady",
+        "repo": "nix-devin-cli",
+        "rev": "1c89c1b68250ba6c545ea828fe7975d6658eadfa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "broady",
+        "repo": "nix-devin-cli",
         "type": "github"
       }
     },
@@ -466,6 +486,7 @@
     "root": {
       "inputs": {
         "codex-desktop-linux": "codex-desktop-linux",
+        "devin-cli": "devin-cli",
         "dms": "dms",
         "home-manager": "home-manager",
         "llm-agents": "llm-agents",
