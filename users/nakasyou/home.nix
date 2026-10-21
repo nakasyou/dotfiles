@@ -1,9 +1,48 @@
-{ config, inputs, lib, pkgs, ... }:
+{ config, inputs, lib, osConfig, pkgs, ... }:
 
 let
   llmAgentsPackages = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
   devinCli = inputs.devin-cli.packages.${pkgs.stdenv.hostPlatform.system}.devin;
   unstablePkgs = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+  nodeWithSystemCAs = pkgs.symlinkJoin {
+    name = "nodejs-${pkgs.nodejs_22.version}-system-ca";
+    paths = [ pkgs.nodejs_22 ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram "$out/bin/node" \
+        --set SSL_CERT_FILE ${osConfig.security.pki.caBundle} \
+        --add-flags --use-openssl-ca
+    '';
+  };
+  bunWithSystemCAs = pkgs.symlinkJoin {
+    name = "bun-${unstablePkgs.bun.version}-system-ca";
+    paths = [ unstablePkgs.bun ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram "$out/bin/bun" \
+        --set SSL_CERT_FILE ${osConfig.security.pki.caBundle}
+      ln -sfn bun "$out/bin/bunx"
+    '';
+  };
+  # The channel still carries uv before the eMudhra trust-store fix.
+  uvPatched = pkgs.stdenv.mkDerivation {
+    pname = "uv";
+    version = "0.13.4";
+    src = pkgs.fetchurl {
+      url = "https://github.com/astral-sh/uv/releases/download/0.13.4/uv-x86_64-unknown-linux-gnu.tar.gz";
+      hash = "sha256-K0KDlvElctRCnPIQyiNN1ZmjOzrwlYpNXtVp1j4/NE8=";
+    };
+    nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+    buildInputs = [ pkgs.stdenv.cc.cc.lib ];
+    dontBuild = true;
+    installPhase = ''
+      runHook preInstall
+      install -Dm755 uv "$out/bin/uv"
+      install -Dm755 uvx "$out/bin/uvx"
+      runHook postInstall
+    '';
+    meta.platforms = [ "x86_64-linux" ];
+  };
   t3codeLatest = unstablePkgs.t3code;
   protonVpnApiCore = unstablePkgs.python3Packages.proton-vpn-api-core.overrideAttrs (oldAttrs: {
     postPatch = oldAttrs.postPatch + ''
@@ -421,6 +460,7 @@ in
     git
     gh
     jq
+    p7zip
     gnupg
     google-cloud-sdk
     google-cloud-sql-proxy
@@ -429,16 +469,18 @@ in
     rclone
     wrangler
     ffmpeg
+    audacity
     pulseaudio
     easyeffects
     kooha
     gnome-sound-recorder
     vicinae
-    nodejs_22
+    nodeWithSystemCAs
+    llmAgentsPackages.pi
     vite-plus
-    bun
+    bunWithSystemCAs
     deno
-    moonbit-bin.moonbit.latest
+    moonbit-bin.latest
     rustc
     cargo
     rust-analyzer
@@ -447,7 +489,7 @@ in
     lean4
     typst
     yt-dlp-nightly
-    uv
+    uvPatched
     discord
     beeper
     signal-desktop

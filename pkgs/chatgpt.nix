@@ -26,7 +26,9 @@
   libxkbcommon,
   nspr,
   nss,
+  openssl,
   pango,
+  tpm2-tss,
   udev,
   wayland,
   libx11,
@@ -45,11 +47,11 @@
 
 stdenv.mkDerivation rec {
   pname = "chatgpt";
-  version = "26.825.51511";
+  version = "26.1016.51333";
 
   src = fetchurl {
     url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb";
-    hash = "sha256-NVSwAixs+1EzJvQ/0R9xiDWncIasTXyi/z67ui1Mf0U=";
+    hash = "sha256-x59/0k/X2LZDmUKpcwbFYT2OBJkD2JPxNqBb/tVR3Io=";
   };
 
   nativeBuildInputs = [
@@ -80,7 +82,9 @@ stdenv.mkDerivation rec {
     libxkbcommon
     nspr
     nss
+    openssl
     pango
+    tpm2-tss
     udev
     wayland
     libx11

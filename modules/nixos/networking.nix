@@ -24,6 +24,8 @@
     lib.mkAfter [ "CAP_CHOWN" ];
 
   environment.systemPackages = with pkgs; [
+    arp-scan
+    nmap
     openvpn
     wireguard-tools
   ];

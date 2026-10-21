@@ -3,10 +3,10 @@ let
   python = pkgs.python3.withPackages (p: with p; [ dbus-python packaging psutil pyxdg ]);
 in pkgs.stdenv.mkDerivation {
   pname = "chrome-remote-desktop";
-  version = "154.0.8037.11";
+  version = "155.0.8059.19";
   src = pkgs.fetchurl {
     url = "https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb";
-    hash = "sha256-Vy3uCMoCT5IqTDW0sCir2jSMm1TxKIjqquU/aHDdWSQ=";
+    hash = "sha256-OXAcaVGz2e3/CBQ9zK2RlGjhhmuYl8hzFB3E9muq/3I=";
   };
   nativeBuildInputs = with pkgs; [ dpkg autoPatchelfHook makeWrapper ];
   buildInputs = with pkgs; [

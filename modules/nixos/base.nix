@@ -35,6 +35,12 @@
     ../../certificates/mitmproxy-ca-cert.pem
   ];
 
+  # Block roots chaining to the compromised eMudhra intermediates.
+  security.pki.caCertificateBlacklist = [
+    "Comodo AAA Services root"
+    "emSign ECC Root CA - G3"
+  ];
+
   nix.gc = {
     automatic = true;
     dates = "weekly";
