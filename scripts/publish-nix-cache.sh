@@ -173,39 +173,10 @@ if github_command gh release view nix-cache-index >/dev/null; then
   fi
 fi
 
-# GitHub Releases should contain only paths that are unavailable from the
-# official cache. References to official paths remain valid and are fetched
-# directly from cache.nixos.org by clients.
-printf '%s\n' "$@" | nix path-info --recursive --stdin | sort -u > "$closure_file"
-: > "$custom_paths_file"
-export custom_paths_file
-if ! xargs -P 32 -n 1 bash -c '
-  path=$1
-  base=${path##*/}
-  hash=${base%%-*}
-  status=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
-    --retry 4 --retry-all-errors --retry-delay 2 \
-    "https://cache.nixos.org/${hash}.narinfo") || exit 1
-  case "$status" in
-    200) ;;
-    404) printf "%s\\n" "$path" >> "$custom_paths_file" ;;
-    *) echo "Unexpected cache.nixos.org response $status for $path" >&2; exit 1 ;;
-  esac
-' _ < "$closure_file"; then
-  echo "Failed while checking the official Nix cache." >&2
-  exit 1
-fi
-sort -u -o "$custom_paths_file" "$custom_paths_file"
-
-official_count=$(($(wc -l < "$closure_file") - $(wc -l < "$custom_paths_file")))
-custom_count=$(wc -l < "$custom_paths_file")
-echo "Excluding $official_count paths available from cache.nixos.org; preparing $custom_count custom paths."
-
-mkdir -p "$cache_dir/nar"
-# A file binary cache requires referenced paths to be present while it is
-# assembled. Materialize the complete closure locally, then select only custom
-# narinfo/NAR pairs for Release upload below.
-nix copy --to "file://$cache_dir?compression=zstd&secret-key=$key_file" "$@"
+# Seed official narinfo metadata so Nix considers those references present
+# without materializing their NARs in the local staging cache.
+bash "$(dirname "$0")/prepare-nix-cache.sh" \
+  "$cache_dir" "$key_file" "$closure_file" "$custom_paths_file" "$@"
 
 declare -a paths files
 : > "$custom_hashes_file"

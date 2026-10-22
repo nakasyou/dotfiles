@@ -71,17 +71,26 @@ jobs:
             extra-substituters = https://cache.nakasyou.how
             extra-trusted-public-keys = cache.nakasyou.how-1:BumjaqVgJE6uAuaJcoV1oeFKPEyPxZ73XNmxVskqQZM=
 
+      - name: Test cache staging
+        run: bash tests/nix-cache-staging.sh
+
       - name: Show flake outputs
         run: nix flake show
 
       - name: Build
+        shell: bash
         run: |
           : > "$RUNNER_TEMP/nix-cache-roots"
           for target in ${{ matrix.targets }}; do
+            build_log=$(mktemp)
             max_attempts=5
             for attempt in $(seq 1 "$max_attempts"); do
-              if nix build --print-build-logs --no-link "$target"; then
+              if nix build --print-build-logs --no-link "$target" 2>&1 | tee "$build_log"; then
                 break
+              fi
+              if grep -Eq 'hash mismatch in fixed-output derivation|No space left on device' "$build_log"; then
+                echo "Build failed with a non-retryable hash or disk-space error." >&2
+                exit 1
               fi
               if ((attempt == max_attempts)); then
                 echo "Failed to build $target after $max_attempts attempts." >&2
@@ -91,6 +100,7 @@ jobs:
               echo "Build attempt $attempt/$max_attempts failed; retrying in ${delay}s." >&2
               sleep "$delay"
             done
+            rm -f "$build_log"
             nix path-info "$target" >> "$RUNNER_TEMP/nix-cache-roots"
           done
 

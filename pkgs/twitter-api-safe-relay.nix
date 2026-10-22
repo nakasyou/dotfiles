@@ -19,7 +19,10 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     inherit (finalAttrs) pname version src;
     pnpm = pnpm_11;
     fetcherVersion = 3;
-    hash = "sha256-sCFeohiMYGJyZUQbMEOCWWxLfx8x2978aEYlGbWeUdc=";
+    hash = if stdenvNoCC.hostPlatform.isDarwin then
+      "sha256-NGHlQ3sS9XU5lHGU4fUpuB0mAQvA01runMg4vNk8dBg="
+    else
+      "sha256-sCFeohiMYGJyZUQbMEOCWWxLfx8x2978aEYlGbWeUdc=";
   };
 
   nativeBuildInputs = [
