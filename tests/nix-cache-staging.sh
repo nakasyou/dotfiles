@@ -4,6 +4,8 @@ set -euo pipefail
 repo_dir=$(cd "$(dirname "$0")/.." && pwd)
 workdir=$(mktemp -d)
 trap 'rm -rf "$workdir"' EXIT
+# macOS TMPDIR uses /var, a symlink that Nix rejects for local store roots.
+workdir=$(cd "$workdir" && pwd -P)
 
 # Two store paths with a real reference, without building any packages.
 dep=$(nix eval --raw --expr 'builtins.toFile "cache-test-dependency" "official dependency"')
