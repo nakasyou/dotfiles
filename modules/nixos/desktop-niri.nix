@@ -31,11 +31,11 @@ in
   programs.ydotool.enable = true;
   users.users.${username}.extraGroups = [ "ydotool" ];
 
-  # Super + TrackPoint flick moves the focused window/column between tiles.
+  # Super + middle button + TrackPoint flick moves focus between tiles.
   # Runs as root because it grabs /dev/input nodes and writes to /dev/uinput.
   hardware.uinput.enable = true;
   systemd.services.niri-trackpoint-move = {
-    description = "Super+TrackPoint flick -> niri tile moves";
+    description = "Super+middle+TrackPoint flick -> niri focus moves";
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       ExecStart = "${niri-trackpoint-move}/bin/niri-trackpoint-move";
@@ -164,12 +164,12 @@ in
         Mod+Shift+Up    { move-column-to-workspace-up; }
         Mod+Shift+Down  { move-column-to-workspace-down; }
 
-        // F13-F16 are injected by niri-trackpoint-move while the TrackPoint is
-        // pushed with Super held.
-        Mod+F13 { move-column-left; }
-        Mod+F14 { move-column-right; }
-        Mod+F15 { move-window-up-or-to-workspace-up; }
-        Mod+F16 { move-window-down-or-to-workspace-down; }
+        // Ctrl+Alt+arrows are injected by niri-trackpoint-move while the
+        // TrackPoint is pushed with Super held.
+        Mod+Ctrl+Alt+Left  { focus-column-left; }
+        Mod+Ctrl+Alt+Right { focus-column-right; }
+        Mod+Ctrl+Alt+Up    { focus-window-or-workspace-up; }
+        Mod+Ctrl+Alt+Down  { focus-window-or-workspace-down; }
 
         Mod+Ctrl+Up   { focus-workspace-up; }
         Mod+Ctrl+Down { focus-workspace-down; }

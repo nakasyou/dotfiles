@@ -18,6 +18,10 @@
     allowedTCPPorts = [ 53 ];
   };
 
+  # Packet and OpenQuickShare receive transfers on their configured ports.
+  networking.firewall.allowedTCPPorts = [ 9300 9301 ];
+  networking.firewall.allowedUDPPorts = [ 5353 ];
+
   # NetworkManager's hotspot dnsmasq must chown its runtime/lease files before
   # dropping privileges. Without this, clients cannot complete DHCP.
   systemd.services.NetworkManager.serviceConfig.CapabilityBoundingSet =
@@ -25,6 +29,7 @@
 
   environment.systemPackages = with pkgs; [
     arp-scan
+    iw
     nmap
     openvpn
     wireguard-tools
