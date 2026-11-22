@@ -12,6 +12,7 @@
   nixpkgs.hostPlatform = "aarch64-darwin";
 
   networking.hostName = "mac-mini";
+  environment.shellAliases.nix-switch = "darwin-rebuild switch --flake ~/dotfiles#mac-mini";
 
   system.primaryUser = username;
 

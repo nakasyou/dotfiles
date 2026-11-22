@@ -4,6 +4,10 @@ let
 in {
   environment.systemPackages = [ host ];
   services.xserver.desktopManager.xfce.enable = true;
+  # Keep XFCE's notification daemon off the shared desktop bus so DMS can
+  # own org.freedesktop.Notifications in the local niri session. CRD starts
+  # its own daemon below, inside its private D-Bus session.
+  environment.xfce.excludePackages = [ pkgs.xfce4-notifyd ];
   security.pam.services.chrome-remote-desktop = { };
   # Google's registration binary calls this absolute path.
   systemd.tmpfiles.rules = [
@@ -12,7 +16,10 @@ in {
 
   # A separate X11 desktop avoids interfering with the local Wayland session.
   environment.etc."chrome-remote-desktop-session".text = ''
-    exec ${pkgs.dbus}/bin/dbus-run-session ${pkgs.xfce.xfce4-session}/bin/xfce4-session
+    exec ${pkgs.dbus}/bin/dbus-run-session ${pkgs.writeShellScript "crd-xfce-session" ''
+      ${pkgs.xfce4-notifyd}/lib/xfce4/notifyd/xfce4-notifyd &
+      exec ${pkgs.xfce.xfce4-session}/bin/xfce4-session
+    ''}
   '';
   systemd.services."chrome-remote-desktop@" = {
     description = "Chrome Remote Desktop for %i";

@@ -204,7 +204,7 @@ in
   environment.systemPackages = with pkgs; [
     cargo
     duckdb
-    nodejs_22
+    nodejs_26
     rustc
     cloudflared
   ];

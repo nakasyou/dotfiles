@@ -9,7 +9,6 @@
     ../../modules/nixos/desktop-gnome.nix
     ../../modules/nixos/desktop-niri.nix
     ../../modules/nixos/chrome-remote-desktop.nix
-    ../../modules/nixos/rustdesk.nix
     ../../modules/nixos/input-ja-hazkey.nix
     ../../modules/nixos/audio.nix
     ../../modules/nixos/docker.nix
@@ -21,7 +20,13 @@
     ../../modules/nixos/steam.nix
   ];
 
+  security.pam.loginLimits = [
+    { domain = "nakasyou"; type = "soft"; item = "memlock"; value = "614400"; }
+    { domain = "nakasyou"; type = "hard"; item = "memlock"; value = "614400"; }
+  ];
+
   networking.hostName = "p14s";
+  environment.shellAliases.nix-switch = "sudo nixos-rebuild switch --flake ~/dotfiles#p14s";
   networking.nftables.enable = true;
   hardware.flipperzero.enable = true;
   virtualisation.waydroid.enable = true;

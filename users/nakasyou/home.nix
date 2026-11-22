@@ -4,9 +4,17 @@ let
   llmAgentsPackages = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
   devinCli = inputs.devin-cli.packages.${pkgs.stdenv.hostPlatform.system}.devin;
   unstablePkgs = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+  desktopAppPkgs = import inputs.nixpkgs-desktop-apps {
+    system = pkgs.stdenv.hostPlatform.system;
+    config.allowUnfree = true;
+  };
+  vscodeLatest = (import inputs.nixpkgs-unstable {
+    system = pkgs.stdenv.hostPlatform.system;
+    config.allowUnfreePredicate = pkg: lib.getName pkg == "vscode";
+  }).vscode;
   nodeWithSystemCAs = pkgs.symlinkJoin {
-    name = "nodejs-${pkgs.nodejs_22.version}-system-ca";
-    paths = [ pkgs.nodejs_22 ];
+    name = "nodejs-${pkgs.nodejs_26.version}-system-ca";
+    paths = [ pkgs.nodejs_26 ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram "$out/bin/node" \
@@ -43,7 +51,20 @@ let
     '';
     meta.platforms = [ "x86_64-linux" ];
   };
-  t3codeLatest = unstablePkgs.t3code;
+  agentBrowser = pkgs.callPackage ../../pkgs/agent-browser.nix { };
+  ardia = pkgs.callPackage ../../pkgs/ardia.nix { };
+  panerelay = pkgs.callPackage ../../pkgs/panerelay.nix { };
+  panerelayNativeHostManifest = ''
+    {
+      "name": "org.panerelay.bridge",
+      "description": "Panerelay local browser and agent bridge",
+      "path": "${panerelay}/bin/panerelay-native-host",
+      "type": "stdio",
+      "allowed_origins": [
+        "chrome-extension://panplnkjlkoceaonlmpdekjphgmbggmi/"
+      ]
+    }
+  '';
   protonVpnApiCore = unstablePkgs.python3Packages.proton-vpn-api-core.overrideAttrs (oldAttrs: {
     postPatch = oldAttrs.postPatch + ''
       cat >> proton/vpn/connection/exceptions.py <<'EOF'
@@ -97,7 +118,7 @@ let
     ];
   };
   androidSdk = androidComposition.androidsdk;
-  androidStudio = pkgs.android-studio.withSdk androidSdk;
+  androidStudio = desktopAppPkgs.android-studio.withSdk androidSdk;
   gtk4PkgConfigPackages = with pkgs; [
     cairo
     gdk-pixbuf
@@ -124,8 +145,6 @@ let
       -no-snapshot-save \
       "''${@:-@Eclipsa_API35}"
   '';
-  turbowarp-desktop = pkgs.callPackage ../../pkgs/turbowarp-desktop.nix { };
-  chatgpt = pkgs.callPackage ../../pkgs/chatgpt.nix { };
   bambu-studio-appimage = let
     pname = "bambu-studio";
     version = "02.08.02.61";
@@ -280,6 +299,7 @@ in
     CODEX_CLI_PATH = codexStandalonePath;
   };
   home.sessionPath = [
+    "${config.home.homeDirectory}/.bun/bin"
     "${config.home.homeDirectory}/.local/bin"
     "${javaHome}/bin"
     "${androidSdkRoot}/emulator"
@@ -346,6 +366,9 @@ in
   xdg.configFile."Kvantum/Katerial_Light_RedPink".source = ../../config/dolphin-material/Katerial_Light_RedPink;
   xdg.configFile."Kvantum/kvantum.kvconfig".source = ../../config/dolphin-material/kvantum.kvconfig;
   xdg.configFile."qt6ct/qt6ct.conf".source = ../../config/dolphin-material/qt6ct.conf;
+  xdg.configFile."google-chrome/NativeMessagingHosts/org.panerelay.bridge.json".text = panerelayNativeHostManifest;
+  xdg.configFile."chromium/NativeMessagingHosts/org.panerelay.bridge.json".text = panerelayNativeHostManifest;
+  xdg.configFile."BraveSoftware/Brave-Browser/NativeMessagingHosts/org.panerelay.bridge.json".text = panerelayNativeHostManifest;
   xdg.dataFile."color-schemes/Katerial_Light_RedPink.colors".source = ../../config/dolphin-material/Katerial_Light_RedPink.colors;
   xdg.dataFile."applications/mimeapps.list".force = true;
   home.file.".profile".text = ''
@@ -430,7 +453,11 @@ in
     fi
   '';
   home.packages = with pkgs; [
-    chatgpt
+    (pkgs.callPackage ../../pkgs/cua.nix { })
+    (pkgs.callPackage ../../pkgs/cua-spaces.nix { })
+    (pkgs.callPackage ../../pkgs/agent-desktop.nix { })
+    agentBrowser
+    panerelay
     (pkgs.callPackage ../../pkgs/grok-bot.nix { })
     androidStudio
     androidSdk
@@ -443,20 +470,20 @@ in
     gtk4
     xorg-server
     xauth
-    google-chrome
-    vscode
-    libreoffice
+    desktopAppPkgs.google-chrome
+    desktopAppPkgs.vscode
+    desktopAppPkgs.libreoffice
     (pkgs.callPackage ../../pkgs/dolphin-material.nix { })
-    rpi-imager
-    blender
+    desktopAppPkgs.rpi-imager
+    desktopAppPkgs.blender
+    kicad
     bambu-studio-appimage
-    gimp
+    desktopAppPkgs.gimp
     gpick
     imagemagick
     inkscape
-    obsidian
-    lmstudio
-    t3codeLatest
+    desktopAppPkgs.obsidian
+    desktopAppPkgs.lmstudio
     git
     gh
     jq
@@ -467,14 +494,13 @@ in
     cloudflared
     duckdb
     rclone
-    wrangler
     ffmpeg
-    audacity
+    desktopAppPkgs.audacity
     pulseaudio
     easyeffects
     kooha
     gnome-sound-recorder
-    vicinae
+    desktopAppPkgs.vicinae
     nodeWithSystemCAs
     llmAgentsPackages.pi
     vite-plus
@@ -490,11 +516,11 @@ in
     typst
     yt-dlp-nightly
     uvPatched
-    discord
-    beeper
-    signal-desktop
+    desktopAppPkgs.beeper
+    desktopAppPkgs.signal-desktop
+    packet
     prismlauncher
-    zed-editor
+    tetrio-desktop
     ghostty
     (ags.override {
       extraPackages = [
@@ -544,15 +570,15 @@ in
     mpvpaper
     protonVpn
     zip
-    brave
+    desktopAppPkgs.brave
+    ardia
     gpaste
     gnomeExtensions.appindicator
     gnomeExtensions.dash-to-dock
     gnomeExtensions.blur-my-shell
     gnomeExtensions."hidden-input-method-panel"
-    vesktop
+    desktopAppPkgs.vesktop
     gnome-tweaks
-    turbowarp-desktop
     vastai
     codexStandalone
     llmAgentsPackages.opencode
@@ -561,7 +587,6 @@ in
       # runners cannot use because unprivileged UID maps are disabled.
       doInstallCheck = false;
     }))
-    llm-agents.mimo-code
     devinCli
     flameshotGui
     tmux
@@ -593,7 +618,7 @@ in
     "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vicinae" = {
       name = "Open Vicinae";
       binding = "<Super>a";
-      command = "${lib.getExe pkgs.vicinae} open";
+      command = "${lib.getExe desktopAppPkgs.vicinae} open";
     };
   };
 

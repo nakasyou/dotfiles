@@ -9,6 +9,8 @@ let
     -        if source == AxisSource::Finger {
     +        if matches!(source, AxisSource::Finger | AxisSource::Continuous) {
   '';
+
+  niri-trackpoint-move = pkgs.callPackage ../../pkgs/niri-trackpoint-move.nix { };
 in
 
 {
@@ -28,6 +30,19 @@ in
   # The NixOS module also exports YDOTOOL_SOCKET for desktop clients.
   programs.ydotool.enable = true;
   users.users.${username}.extraGroups = [ "ydotool" ];
+
+  # Super + TrackPoint flick moves the focused window/column between tiles.
+  # Runs as root because it grabs /dev/input nodes and writes to /dev/uinput.
+  hardware.uinput.enable = true;
+  systemd.services.niri-trackpoint-move = {
+    description = "Super+TrackPoint flick -> niri tile moves";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      ExecStart = "${niri-trackpoint-move}/bin/niri-trackpoint-move";
+      Restart = "always";
+      RestartSec = 1;
+    };
+  };
 
   home-manager.users.${username} = {
     imports = [
@@ -62,13 +77,26 @@ in
 
       prefer-no-csd
 
+      cursor {
+        xcursor-theme "Adwaita"
+        xcursor-size 24
+      }
+
       // Work around PipeWire format negotiation failures in screen recorders.
       debug {
         force-pipewire-invalid-modifier
       }
 
+      // External monitor on top, built-in panel below. Note that Wayland/niri
+      // names the HDMI connector HDMI-A-1 (GNOME's monitors.xml calls it HDMI-1).
       output "eDP-1" {
         scale 1
+        position x=0 y=1080
+      }
+
+      output "HDMI-A-1" {
+        scale 1
+        position x=0 y=0
       }
 
       layout {
@@ -94,10 +122,10 @@ in
         Mod+V { spawn "dms" "ipc" "call" "clipboard" "toggle"; }
         Mod+X { spawn "dms" "ipc" "call" "powermenu" "toggle"; }
         Mod+Alt+N allow-when-locked=true { spawn "dms" "ipc" "call" "night" "toggle"; }
-        Super+Alt+L { spawn "dms" "ipc" "call" "lock" "lock"; }
+        Super+L { spawn "dms" "ipc" "call" "lock" "lock"; }
 
         Mod+T { spawn "ghostty"; }
-        Mod+E { spawn "dolphin"; }
+        Mod+E { spawn "nautilus" "--new-window"; }
         Mod+Q { close-window; }
         Alt+F4 { close-window; }
         Mod+M { spawn "dms" "ipc" "call" "processlist" "toggle"; }
@@ -135,6 +163,13 @@ in
         Mod+Shift+Right { move-column-right; }
         Mod+Shift+Up    { move-column-to-workspace-up; }
         Mod+Shift+Down  { move-column-to-workspace-down; }
+
+        // F13-F16 are injected by niri-trackpoint-move while the TrackPoint is
+        // pushed with Super held.
+        Mod+F13 { move-column-left; }
+        Mod+F14 { move-column-right; }
+        Mod+F15 { move-window-up-or-to-workspace-up; }
+        Mod+F16 { move-window-down-or-to-workspace-down; }
 
         Mod+Ctrl+Up   { focus-workspace-up; }
         Mod+Ctrl+Down { focus-workspace-down; }

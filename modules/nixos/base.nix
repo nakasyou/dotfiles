@@ -3,6 +3,12 @@
 {
   time.timeZone = "Asia/Tokyo";
 
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+    memoryPercent = 50;
+  };
+
   i18n.defaultLocale = "ja_JP.UTF-8";
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "en_US.UTF-8";

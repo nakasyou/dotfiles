@@ -45,11 +45,11 @@
 
 stdenv.mkDerivation rec {
   pname = "grok-bot";
-  version = "0.51.0";
+  version = "1.2.0";
 
   src = fetchurl {
-    url = "https://downloads.cursor.com/grokbot/stable/e872793eb9471205c1f37e91891fedd0b827e3c1/linux/x64/grok-bot_${version}_amd64.deb";
-    hash = "sha256-hXs8Klk2n1oWQ5Q/1Bobl/VF8Kyg9pWdJyp+YsTMWeA=";
+    url = "https://downloads.cursor.com/grokbot/stable/cf0aa5097b8fdfea8f2ecd33ce9f71a72655ef08/linux/x64/grok-bot_${version}_amd64.deb";
+    hash = "sha256-FVQenZYlc6pW+syh4FLOL/GiHS0W5OgG/ptyh9XxagM=";
   };
 
   nativeBuildInputs = [
