@@ -2,6 +2,13 @@
 
 let
   llmAgentsPackages = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
+  opencode = pkgs.symlinkJoin {
+    name = "opencode-${llmAgentsPackages.opencode2.version}";
+    paths = [ llmAgentsPackages.opencode2 ];
+    postBuild = ''
+      ln -s opencode2 "$out/bin/opencode"
+    '';
+  };
   devinCli = inputs.devin-cli.packages.${pkgs.stdenv.hostPlatform.system}.devin;
   unstablePkgs = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
   desktopAppPkgs = import inputs.nixpkgs-desktop-apps {
@@ -65,34 +72,15 @@ let
       ]
     }
   '';
-  protonVpnApiCore = unstablePkgs.python3Packages.proton-vpn-api-core.overrideAttrs (oldAttrs: {
-    postPatch = oldAttrs.postPatch + ''
-      cat >> proton/vpn/connection/exceptions.py <<'EOF'
-
-      class NotYetValidCertificateError(VPNConnectionError):
-          """Signals that the certificate validity starts in the future."""
-      EOF
-    '';
-  });
-  protonVpn = unstablePkgs.proton-vpn.overrideAttrs (oldAttrs: {
-    version = "4.17.1";
-    src = pkgs.fetchFromGitHub {
+  protonVpnPkgs = inputs.nixpkgs-proton-vpn.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+  protonVpn = protonVpnPkgs.proton-vpn.overrideAttrs (finalAttrs: {
+    version = "4.19.1";
+    src = protonVpnPkgs.fetchFromGitHub {
       owner = "ProtonVPN";
       repo = "proton-vpn-gtk-app";
-      tag = "v4.17.1";
-      hash = "sha256-8TAiGvl7Myw69dBZetRxdoK9BA86DTE5JXwMWxYcd88=";
+      tag = "v${finalAttrs.version}";
+      hash = "sha256-9ROVI69ykbmc/o4X8T1wC0H9ij/6Vi+MN1/0leAbljU=";
     };
-    propagatedBuildInputs = map
-      (dependency:
-        if (dependency.pname or "") == "proton-vpn-api-core" then
-          protonVpnApiCore
-        else
-          dependency)
-      oldAttrs.propagatedBuildInputs;
-    disabledTestPaths = oldAttrs.disabledTestPaths ++ [
-      # GTK demo rendering requires a display and segfaults in the Nix sandbox.
-      "tests/unit/demo"
-    ];
   });
   androidSdkRoot = "${androidSdk}/libexec/android-sdk";
   javaHome = "${pkgs.jdk17_headless}/lib/openjdk";
@@ -371,6 +359,8 @@ in
   xdg.configFile."BraveSoftware/Brave-Browser/NativeMessagingHosts/org.panerelay.bridge.json".text = panerelayNativeHostManifest;
   xdg.dataFile."color-schemes/Katerial_Light_RedPink.colors".source = ../../config/dolphin-material/Katerial_Light_RedPink.colors;
   xdg.dataFile."applications/mimeapps.list".force = true;
+  xdg.dataFile."dbus-1/services/org.freedesktop.FileManager1.service".source =
+    "${pkgs.nautilus}/share/dbus-1/services/org.freedesktop.FileManager1.service";
   home.file.".profile".text = ''
     for hm_session_vars in \
       "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" \
@@ -456,6 +446,8 @@ in
     (pkgs.callPackage ../../pkgs/cua.nix { })
     (pkgs.callPackage ../../pkgs/cua-spaces.nix { })
     (pkgs.callPackage ../../pkgs/agent-desktop.nix { })
+    (pkgs.callPackage ../../pkgs/orca-ide.nix { })
+    desktopAppPkgs.t3code
     agentBrowser
     panerelay
     (pkgs.callPackage ../../pkgs/grok-bot.nix { })
@@ -581,7 +573,7 @@ in
     gnome-tweaks
     vastai
     codexStandalone
-    llmAgentsPackages.opencode
+    opencode
     (llm-agents.grok.overrideAttrs (_: {
       # grok's version check invokes bubblewrap, which GitHub-hosted Linux
       # runners cannot use because unprivileged UID maps are disabled.
@@ -610,6 +602,10 @@ in
   ];
 
   dconf.settings = {
+    "io/github/nozwock/Packet" = {
+      enable-static-port = true;
+      static-port-number = 9300;
+    };
     "org/gnome/settings-daemon/plugins/media-keys" = {
       custom-keybindings = [
         "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vicinae/"
@@ -625,7 +621,8 @@ in
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      "inode/directory" = "org.kde.dolphin.desktop";
+      "inode/directory" = "org.gnome.Nautilus.desktop";
+      "application/x-blender" = "blender.desktop";
       "text/html" = "brave-browser.desktop";
       "x-scheme-handler/http" = "brave-browser.desktop";
       "x-scheme-handler/https" = "brave-browser.desktop";
