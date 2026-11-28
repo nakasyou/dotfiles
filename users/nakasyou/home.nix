@@ -464,6 +464,8 @@ in
     xauth
     desktopAppPkgs.google-chrome
     desktopAppPkgs.vscode
+    desktopAppPkgs.antigravity-cli
+    desktopAppPkgs.antigravity-hub
     desktopAppPkgs.libreoffice
     (pkgs.callPackage ../../pkgs/dolphin-material.nix { })
     desktopAppPkgs.rpi-imager

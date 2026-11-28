@@ -28,6 +28,7 @@
   networking.hostName = "p14s";
   environment.shellAliases.nix-switch = "sudo nixos-rebuild switch --flake ~/dotfiles#p14s";
   networking.nftables.enable = true;
+  networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 3773 ];
   hardware.flipperzero.enable = true;
   virtualisation.waydroid.enable = true;
 }
